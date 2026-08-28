@@ -1,0 +1,96 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: white;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.app-header p {
+  margin: 5px 0 0 0;
+  opacity: 0.9;
+}
+
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 300px;
+  background: #f5f5f5;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-content {
+  padding: 20px;
+}
+
+.sidebar-content h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.location-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.location-item {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #2a5298;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.location-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateX(2px);
+}
+
+.location-item strong {
+  display: block;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.location-item small {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.location-item p {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.map-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+:global(.leaflet-container) {
+  background: #dbefd8;
+}
