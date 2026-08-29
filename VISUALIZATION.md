@@ -1,4 +1,4 @@
-# Sharknet - Data Visualization & Mapping Libraries
+# Apex - Data Visualization & Mapping Libraries
 
 ## Recommended Libraries & Tools
 
@@ -12,7 +12,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-class SharknetMap {
+class ApexMap {
   constructor(containerId) {
     this.map = L.map(containerId).setView([52.52, 13.405], 10);
     
@@ -90,7 +90,7 @@ class SharknetMap {
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-class SharknetMapboxMap {
+class ApexMapboxMap {
   constructor(containerId, accessToken) {
     mapboxgl.accessToken = accessToken;
     this.map = new mapboxgl.Map({
@@ -228,7 +228,7 @@ class TerrainVisualization {
 }
 ```
 
-## Recommended Stack for Sharknet
+## Recommended Stack for Apex
 
 | Library | Use Case | Complexity | Performance |
 |---------|----------|-----------|-------------||

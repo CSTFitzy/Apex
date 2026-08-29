@@ -1,5 +1,5 @@
 {
-  "name": "sharknet",
+  "name": "apex",
   "version": "0.1.0",
   "description": "Open source tactical management system utilizing ODIN, military intelligence data, and meteorological APIs",
   "main": "index.js",

@@ -2,22 +2,22 @@ services:
   postgres:
     image: postgis/postgis:16-3.3
     environment:
-      POSTGRES_DB: sharknet
-      POSTGRES_USER: sharknet_user
-      POSTGRES_PASSWORD: sharknet_password
+      POSTGRES_DB: apex
+      POSTGRES_USER: apex_user
+      POSTGRES_PASSWORD: apex_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - sharknet-network
+      - apex-network
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     networks:
-      - sharknet-network
+      - apex-network
 
   backend:
     build:
@@ -35,7 +35,7 @@ services:
     volumes:
       - ./server:/app/server
     networks:
-      - sharknet-network
+      - apex-network
 
   frontend:
     build:
@@ -46,11 +46,11 @@ services:
     volumes:
       - ./client:/app/client
     networks:
-      - sharknet-network
+      - apex-network
 
 volumes:
   postgres_data:
 
 networks:
-  sharknet-network:
+  apex-network:
     driver: bridge

@@ -1,4 +1,4 @@
-# Sharknet
+# Apex
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
@@ -67,7 +67,7 @@ See [VISUALIZATION.md](./VISUALIZATION.md) for data visualization and mapping li
 ## Project Structure
 
 ```
-sharknet/
+apex/
 ├── server/                 # Backend (Node.js/Express)
 │   ├── routes/            # API routes
 │   ├── services/          # Business logic

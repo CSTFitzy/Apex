@@ -1,4 +1,4 @@
-# Sharknet - API Integration Guide
+# Apex - API Integration Guide
 
 ## Weather Data Integration Examples
 
@@ -41,7 +41,7 @@ async function getMetNorwayForecast(latitude, longitude) {
     `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${latitude}&lon=${longitude}`,
     {
       headers: {
-        'User-Agent': '(Sharknet; contact@example.com)' // Required by MET Norway
+        'User-Agent': '(Apex; contact@example.com)' // Required by MET Norway
       }
     }
   );
@@ -451,7 +451,7 @@ const forecast = await weatherCache.fetchWithCache(
 curl "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.405&hourly=temperature_2m"
 
 # Test MET Norway
-curl -H "User-Agent: Sharknet" "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=52.52&lon=13.405"
+curl -H "User-Agent: Apex" "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=52.52&lon=13.405"
 
 # Test local ODIN instance (if running)
 wscat -c ws://localhost:8080/ws

@@ -25,11 +25,11 @@ app.use(express.json());
 
 // Database connection
 const pool = new pg.Pool({
-  user: process.env.DB_USER || 'sharknet_user',
-  password: process.env.DB_PASSWORD || 'sharknet_password',
+  user: process.env.DB_USER || 'apex_user',
+  password: process.env.DB_PASSWORD || 'apex_password',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'sharknet',
+  database: process.env.DB_NAME || 'apex',
 });
 
 // Redis connection
@@ -43,7 +43,7 @@ redisClient.connect().catch(console.error);
 
 // Routes
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'Sharknet server is running' });
+  res.json({ status: 'ok', message: 'Apex server is running' });
 });
 
 app.get('/api/map/data', async (req: Request, res: Response) => {
