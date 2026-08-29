@@ -1,0 +1,134 @@
+:root {
+  --color-bg: #0b0f14;
+  --color-surface: #131a22;
+  --color-border: #232c37;
+  --color-text: #e6edf3;
+  --color-muted: #8b949e;
+  --color-accent: #2f81f7;
+  --color-danger: #f85149;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button {
+  cursor: pointer;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+button.link-button {
+  background: none;
+  color: var(--color-accent);
+  padding: 0;
+  margin-top: 0.5rem;
+}
+
+input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.auth-form {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 2rem;
+  width: 320px;
+}
+
+.auth-subtitle {
+  color: var(--color-muted);
+  margin-top: -0.5rem;
+}
+
+.auth-error {
+  color: var(--color-danger);
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dashboard-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: 2fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.dashboard-map {
+  grid-row: 1 / 3;
+}
+
+.tactical-map {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.weather-widget,
+.intelligence-panel,
+.analysis-chart {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.weather-widget-error,
+.intelligence-panel-error {
+  color: var(--color-danger);
+}
