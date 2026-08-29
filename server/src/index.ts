@@ -5,6 +5,10 @@ import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
 import pg from 'pg';
 import * as redis from 'redis';
+import weatherRouter from './routes/weather.js';
+import terrainRouter from './routes/terrain.js';
+import documentsRouter from './routes/documents.js';
+import enemyRouter from './routes/enemy.js';
 
 dotenv.config();
 
@@ -34,8 +38,10 @@ const pool = new pg.Pool({
 
 // Redis connection
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
+  socket: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+  },
 });
 
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
@@ -45,6 +51,11 @@ redisClient.connect().catch(console.error);
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Sharknet server is running' });
 });
+
+app.use('/api/weather', weatherRouter);
+app.use('/api/terrain', terrainRouter);
+app.use('/api/documents', documentsRouter);
+app.use('/api/enemy', enemyRouter);
 
 app.get('/api/map/data', async (req: Request, res: Response) => {
   try {
