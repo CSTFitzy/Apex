@@ -8,6 +8,7 @@ import * as redis from 'redis';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -82,9 +83,15 @@ app.post('/api/locations', async (req: Request, res: Response) => {
 
 // Serve built frontend (used by the Electron desktop wrapper / production deployments)
 const clientDistPath = path.join(__dirname, '../../client/dist');
+const staticLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
-  app.get(/^(?!\/api).*/, (req: Request, res: Response) => {
+  app.get(/^(?!\/api).*/, staticLimiter, (req: Request, res: Response) => {
     res.sendFile(path.join(clientDistPath, 'index.html'));
   });
 }
