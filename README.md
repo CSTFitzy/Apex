@@ -2,7 +2,11 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
+<img src="assets/icons/apex-logo.svg" alt="Apex logo" width="96" height="96" />
+
 Open-source tactical management system utilizing ODIN, military intelligence data, and meteorological APIs for strategic planning and terrain analysis.
+
+Logo assets (SVG, PNG in 16-512px, and Windows `.ico`) are available in [`assets/icons/`](./assets/icons).
 
 ## Features
 
@@ -110,6 +114,42 @@ npm install
 # Start Vite development server
 npm run dev
 ```
+
+## Desktop Application (Electron)
+
+Apex can also run as a native desktop application, with its own window, icon, and taskbar entry - no browser or terminal windows required.
+
+### Run in development mode
+
+```bash
+npm install
+npm run electron
+```
+
+This installs nothing extra beyond the root `npm install` and will automatically:
+- Start the Express backend server
+- Start the Vite frontend dev server
+- Open the Apex desktop window once both are ready
+
+### One-click launcher (Windows)
+
+Double-click `Apex.bat` in the repository root. It installs dependencies on first run and then launches the desktop app.
+
+### Build a standalone Windows executable
+
+```bash
+npm run electron:build
+```
+
+Produces a portable `Apex-Portable-<version>.exe` in `release/` that runs without installation.
+
+### Build a Windows installer
+
+```bash
+npm run electron:dist
+```
+
+Produces an `Apex-Setup-<version>.exe` NSIS installer in `release/` that installs Apex with a Start Menu and desktop shortcut.
 
 ## Configuration
 

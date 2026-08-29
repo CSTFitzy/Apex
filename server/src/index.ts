@@ -5,8 +5,14 @@ import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
 import pg from 'pg';
 import * as redis from 'redis';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app: Express = express();
 const httpServer = createServer(app);
@@ -34,8 +40,10 @@ const pool = new pg.Pool({
 
 // Redis connection
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
+  socket: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+  },
 });
 
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
@@ -71,6 +79,15 @@ app.post('/api/locations', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to create location' });
   }
 });
+
+// Serve built frontend (used by the Electron desktop wrapper / production deployments)
+const clientDistPath = path.join(__dirname, '../../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get(/^(?!\/api).*/, (req: Request, res: Response) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 // WebSocket events
 io.on('connection', (socket) => {
