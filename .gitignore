@@ -17,12 +17,11 @@ node_modules/
 .DS_Store
 
 # Build
-/dist
+dist/
 /build
 /.next
 /out
-server/dist
-client/dist
+/release
 
 # Logs
 logs/

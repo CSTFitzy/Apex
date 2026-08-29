@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <defs>
+    <linearGradient id="apexBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2b3542"/>
+      <stop offset="100%" stop-color="#0a0d12"/>
+    </linearGradient>
+    <linearGradient id="apexEdge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff9a3d"/>
+      <stop offset="100%" stop-color="#d94800"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Downward-pointing tactical spearhead -->
+  <path d="M50 95
+           L14 18
+           Q14 5 27 5
+           L73 5
+           Q86 5 86 18
+           Z"
+        fill="url(#apexBody)"
+        stroke="url(#apexEdge)"
+        stroke-width="3.5"
+        stroke-linejoin="round"/>
+
+  <!-- Stylized "A" -->
+  <path d="M50 20
+           L70 76
+           L58 76
+           L54.4 64
+           L45.6 64
+           L42 76
+           L30 76
+           Z
+           M50 38
+           L44 56
+           L56 56
+           Z"
+        fill="url(#apexEdge)"
+        fill-rule="evenodd"/>
+</svg>

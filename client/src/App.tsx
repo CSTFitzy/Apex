@@ -61,7 +61,7 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-content">
-          <h1>🦈 Sharknet</h1>
+          <h1><img src="/apex-logo.svg" alt="Apex" className="app-logo" /> Apex</h1>
           <p>Tactical Battle Management System</p>
         </div>
         <nav className="header-nav">
