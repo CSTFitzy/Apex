@@ -5,11 +5,22 @@
  * validation library.
  */
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** Validate an email address string. */
+/** Validate an email address string without using a backtracking-prone regex. */
 export function isValidEmail(email) {
-  return typeof email === 'string' && EMAIL_REGEX.test(email);
+  if (typeof email !== 'string' || email.length === 0 || email.length > 254) return false;
+  if (/\s/.test(email)) return false;
+
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0 || atIndex !== email.lastIndexOf('@')) return false;
+
+  const localPart = email.slice(0, atIndex);
+  const domainPart = email.slice(atIndex + 1);
+  if (!localPart || !domainPart) return false;
+
+  const dotIndex = domainPart.indexOf('.');
+  if (dotIndex <= 0 || dotIndex === domainPart.length - 1) return false;
+
+  return true;
 }
 
 /**

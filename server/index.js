@@ -11,6 +11,7 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createClient as createRedisClient } from 'redis';
+import rateLimit from 'express-rate-limit';
 
 import { pool, checkConnection } from './db/connection.js';
 import { initSchema } from './db/models.js';
@@ -30,8 +31,36 @@ const app = express();
 /* Core middleware                                                     */
 /* ------------------------------------------------------------------ */
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+// CORS_ORIGIN should be a comma-separated allowlist of trusted origins in
+// production (e.g. "https://app.example.com"). We intentionally avoid
+// defaulting to a wildcard ('*') since that would allow any website to
+// call authenticated API endpoints from a browser.
+const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. server-to-server, curl, mobile apps).
+      if (!origin || configuredOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+  })
+);
 app.use(express.json());
+
+// Rate limit all API traffic to mitigate brute-force and abuse.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: Number(process.env.RATE_LIMIT_MAX) || 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', apiLimiter);
 
 // Simple request logging.
 app.use((req, res, next) => {
