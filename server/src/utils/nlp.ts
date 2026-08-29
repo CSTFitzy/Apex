@@ -21,8 +21,13 @@ export interface DocumentExtraction {
 }
 
 // Matches decimal degree pairs, e.g. "34.0522, -118.2437" or "34.0522N 118.2437W"
+// Note: the optional hemisphere letter must immediately follow the number
+// (no intervening whitespace) so that whitespace is only ever consumed by
+// a single quantified group (the `[,\s]+` separator) in each component,
+// avoiding catastrophic/polynomial backtracking (ReDoS) on inputs with
+// long runs of whitespace.
 const DECIMAL_COORD_REGEX =
-  /(-?\d{1,3}\.\d+)\s*[°]?\s*([NnSs])?(?![a-zA-Z])[,\s]+(-?\d{1,3}\.\d+)\s*[°]?\s*([EeWw])?(?![a-zA-Z])/g;
+  /(-?\d{1,3}\.\d+)°?([NnSs])?(?![a-zA-Z])[,\s]+(-?\d{1,3}\.\d+)°?([EeWw])?(?![a-zA-Z])/g;
 
 // Matches Military Grid Reference System style tokens, e.g. "18TWL8401"
 const MGRS_REGEX = /\b\d{1,2}[C-HJ-NP-X][A-HJ-NP-Z]{2}\d{2,10}\b/g;
