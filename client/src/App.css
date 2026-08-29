@@ -428,4 +428,245 @@
   .weather-grid {
     grid-template-columns: 1fr;
   }
+
+  .app-content {
+    flex-direction: column;
+  }
+
+  .side-panel {
+    width: 100%;
+    max-height: 50vh;
+  }
+}
+
+/* ==== Tactical dashboard layout (map + side panel) ==== */
+.map-main {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.side-panel {
+  width: 420px;
+  flex-shrink: 0;
+  background-color: #0f1423;
+  border-left: 2px solid #00b4d8;
+  overflow-y: auto;
+  box-shadow: inset 2px 0 8px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+}
+
+.side-panel h2 {
+  font-size: 18px;
+  color: #00b4d8;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.side-panel h3 {
+  font-size: 14px;
+  color: #90caf9;
+  margin: 15px 0 8px 0;
+}
+
+.side-panel h4 {
+  font-size: 13px;
+  color: #00b4d8;
+  margin: 10px 0 5px 0;
+}
+
+.panel-subtitle {
+  font-size: 11px;
+  color: #6b7fa0;
+  margin: 0 0 15px 0;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: #90caf9;
+  font-style: italic;
+}
+
+.error-text {
+  font-size: 12px;
+  color: #ff6b6b;
+  background: rgba(231, 76, 60, 0.1);
+  border-left: 3px solid #e74c3c;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.action-btn {
+  background-color: #00b4d8;
+  color: #0a0e27;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 4px 4px 4px 0;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+  box-shadow: 0 0 12px rgba(0, 180, 216, 0.6);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn.secondary {
+  background-color: #1a2940;
+  color: #90caf9;
+  border: 1px solid #00b4d8;
+}
+
+.action-btn.play-btn {
+  background-color: #2ecc71;
+  color: #0a0e27;
+}
+
+.terrain-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.terrain-tool,
+.spot-height-list,
+.terrain-report,
+.document-results,
+.extraction-section,
+.friendly-forces-input,
+.counter-plan-results,
+.threat-assessment,
+.matched-doctrine,
+.counter-plan-narrative,
+.doctrine-card,
+.unit-status-list,
+.narration-log {
+  background-color: #1a2940;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.threat-assessment,
+.weather-alerts {
+  border-left: 4px solid #f1c40f;
+}
+
+.doctrine-card {
+  background-color: #0f1423;
+  margin-bottom: 8px;
+}
+
+.force-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.force-row input,
+.manual-ao-correction input {
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.manual-ao-correction {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.side-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.side-panel th,
+.side-panel td {
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid #2d3e50;
+}
+
+.side-panel ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.los-visible {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.los-obstructed {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.affiliation-friendly {
+  color: #4da6ff;
+}
+
+.affiliation-hostile {
+  color: #ff6b6b;
+}
+
+.narration-log ul {
+  list-style: none;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.narration-log li {
+  padding: 6px 0;
+  border-bottom: 1px solid #2d3e50;
+}
+
+.event-time {
+  color: #6b7fa0;
+  margin-right: 6px;
+  font-size: 10px;
+}
+
+.forecast-list {
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.spot-height-marker {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #ffcc00;
+  text-shadow: 0 0 3px #000;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.spot-height-marker span {
+  font-size: 10px;
+  color: #fff;
+}
+
+.nato-symbol-icon {
+  background: transparent;
+  border: none;
 }

@@ -49,6 +49,17 @@ Logo assets (SVG, PNG in 16-512px, and Windows `.ico`) are available in [`assets
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:3000/api
 
+## Core Tactical Capabilities
+
+This build wires the full tactical decision-support workflow together end-to-end:
+
+- **Interactive Tactical Map** - pan/zoom anywhere, toggle OSM/topographical/satellite base layers plus a military grid overlay, and draw an operational area (AO) boundary directly on the map.
+- **Weather Analysis** - `GET /api/weather?lat=&lon=` and `/api/weather/history` proxy Open-Meteo (current conditions, 7-day forecast, historical archive) and compute an operational impact rating (LOW/MODERATE/HIGH/SEVERE) from visibility, wind, precipitation and cloud cover.
+- **Terrain Analysis** - `GET /api/terrain/spot-heights`, `POST /api/terrain/los`, `POST /api/terrain/viewshed`, `POST /api/terrain/slope` and `POST /api/terrain/report` use free SRTM/Copernicus elevation data (via Open-Meteo's elevation API) to auto-identify key terrain (spot heights), compute line-of-sight between any two points (curvature/refraction corrected), generate a simplified 360° viewshed, and produce a full terrain report with inter-visibility between all spot heights in the AO.
+- **Operational Orders Processing** - `POST /api/documents/upload` accepts PDF/DOCX/TXT orders, extracts text, and runs rule-based NLP to identify coordinates, enemy/friendly force mentions, mission objectives and key terms, then matches the findings against a simulated ODIN-style doctrine database.
+- **Enemy Force Planning** - `POST /api/enemy/counter-plan` combines the matched doctrine profiles with your friendly force disposition to generate a threat assessment (with probability of success) and a counter-plan narrative with recommended actions.
+- **Real-Time Simulation** - the Simulation tab renders friendly/hostile units with NATO APP-6D symbology (via `milsymbol`) and lets you Play/Pause real-time unit movement, with automatic engagement resolution and a narration log describing enemy actions.
+
 ## Architecture
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design and technology stack.

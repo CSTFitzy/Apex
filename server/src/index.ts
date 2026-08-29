@@ -9,6 +9,10 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import rateLimit from 'express-rate-limit';
+import weatherRouter from './routes/weather.js';
+import terrainRouter from './routes/terrain.js';
+import documentsRouter from './routes/documents.js';
+import enemyRouter from './routes/enemy.js';
 
 dotenv.config();
 
@@ -54,6 +58,11 @@ redisClient.connect().catch(console.error);
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Apex server is running' });
 });
+
+app.use('/api/weather', weatherRouter);
+app.use('/api/terrain', terrainRouter);
+app.use('/api/documents', documentsRouter);
+app.use('/api/enemy', enemyRouter);
 
 app.get('/api/map/data', async (req: Request, res: Response) => {
   try {
