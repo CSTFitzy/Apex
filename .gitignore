@@ -21,6 +21,8 @@ node_modules/
 /build
 /.next
 /out
+server/dist
+client/dist
 
 # Logs
 logs/
