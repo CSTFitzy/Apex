@@ -24,7 +24,7 @@ export default function EnemyPanel({ docResult, terrainSummary, onCounterPlan }:
   const [error, setError] = useState<string | null>(null);
 
   const enemyText = docResult
-    ? [...docResult.extraction.enemyMentions, ...docResult.rawTextPreview].join(' ')
+    ? [...docResult.extraction.enemyMentions, docResult.rawTextPreview].join(' ')
     : '';
 
   const updateForce = (idx: number, field: keyof FriendlyForce, value: string) => {
