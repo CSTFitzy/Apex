@@ -23,6 +23,8 @@ import odinRoutes from './routes/odin.js';
 import weatherRoutes from './routes/weather.js';
 import tacticalRoutes from './routes/tactical.js';
 import supplyRoutes from './routes/supply.js';
+import analyticsRoutes from './routes/analytics.js';
+import messagesRoutes from './routes/messages.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -116,6 +118,8 @@ app.use('/api/odin', odinRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/tactical', tacticalRoutes);
 app.use('/api/supply', supplyRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/messages', messagesRoutes);
 
 /* ------------------------------------------------------------------ */
 /* 404 + error handling                                                 */
@@ -139,6 +143,10 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 registerWebSocketHandlers(wss);
+// Expose the WebSocket server to route handlers (e.g. so REST-sent chat
+// messages/analytics events can also be broadcast to connected WebSocket
+// clients).
+app.set('wss', wss);
 
 async function start() {
   try {

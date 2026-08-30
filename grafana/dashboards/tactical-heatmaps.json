@@ -1,0 +1,54 @@
+{
+  "id": null,
+  "uid": "apex-tactical-heatmaps",
+  "title": "Apex - Tactical Heatmaps",
+  "description": "Spatial-binned tactical heatmaps (casualty, enemy contact, engagement, fire support, risk, supply vulnerability, comms blackout) computed by server/analytics/engine.js#computeHeatmap. Queries assume grid cells are persisted to a `heatmap_cells` table (type, lat, lng, intensity, generated_at).",
+  "tags": ["apex", "tactical", "heatmap"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "heatmap_type",
+        "type": "custom",
+        "label": "Heatmap Type",
+        "query": "casualty,enemy_contact,engagement,fire_support,risk,supply_vulnerability,comms_blackout",
+        "current": { "text": "risk", "value": "risk" },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "geomap",
+      "title": "Tactical Heatmap - $heatmap_type",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT lat, lng, intensity FROM heatmap_cells WHERE type = '$heatmap_type' AND generated_at = (SELECT MAX(generated_at) FROM heatmap_cells WHERE type = '$heatmap_type')",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Top Intensity Cells",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT lat AS \"Lat\", lng AS \"Lng\", intensity AS \"Intensity\" FROM heatmap_cells WHERE type = '$heatmap_type' AND generated_at = (SELECT MAX(generated_at) FROM heatmap_cells WHERE type = '$heatmap_type') ORDER BY intensity DESC LIMIT 20",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

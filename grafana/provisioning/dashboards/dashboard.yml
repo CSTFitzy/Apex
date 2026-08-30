@@ -1,0 +1,16 @@
+# Provisions the dashboard file provider so JSON dashboard models placed in
+# grafana/dashboards/ (mounted at /var/lib/grafana/dashboards in the
+# container - see docker-compose.yml) are automatically loaded on startup.
+apiVersion: 1
+
+providers:
+  - name: Apex Tactical Dashboards
+    orgId: 1
+    folder: Apex
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
