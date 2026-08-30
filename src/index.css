@@ -132,3 +132,28 @@ label {
 .intelligence-panel-error {
   color: var(--color-danger);
 }
+
+.aar-panel {
+  margin-top: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.aar-form, .aar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.aar-results { display: grid; gap: 0.75rem; margin-top: 1rem; }
+.aar-score { display: flex; gap: 1rem; align-items: center; }
+.aar-score span { font-size: 1.5rem; color: var(--color-accent); }
+.aar-replay { border-left: 3px solid var(--color-accent); padding-left: 0.75rem; }
+.aar-replay label { display: inline-flex; margin: 0 0 0 0.5rem; }
+.aar-replay input[type='range'] { width: 100%; }
+.aar-table > div { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--color-border); }
+.aar-table span { color: var(--color-muted); }
+.aar-error { color: var(--color-danger); }
+.aar-scenario { padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 4px; }

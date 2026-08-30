@@ -4,6 +4,7 @@ import Map from '../components/Map.jsx';
 import WeatherWidget from '../components/WeatherWidget.jsx';
 import IntelligencePanel from '../components/IntelligencePanel.jsx';
 import AnalysisChart from '../components/AnalysisChart.jsx';
+import AARPanel from '../components/AARPanel.jsx';
 import api, { setToken } from '../utils/api.js';
 import SharknetSocket from '../utils/websocket.js';
 
@@ -75,6 +76,7 @@ export default function Dashboard({ onLogout }) {
             labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri']}
             datasets={[{ label: 'Reports', data: [3, 5, 2, 8, 4], borderColor: '#2f81f7' }]}
           />
+          <AARPanel />
         </section>
       </div>
     </div>
