@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { mkdir } from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import { isAllowedDocumentType } from '../services/documentParser.js';
 import {
   addDocument,
@@ -35,6 +36,12 @@ import { logger } from '../utils/logger.js';
 const router = Router();
 const UPLOAD_DIR = path.resolve(process.cwd(), 'server/uploads/documents');
 await mkdir(UPLOAD_DIR, { recursive: true });
+const aiPlanningLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: Number(process.env.AI_PLANNING_RATE_LIMIT_MAX) || 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const upload = multer({
   dest: UPLOAD_DIR,
@@ -162,7 +169,7 @@ router.post('/analysis', requireAuth, async (req, res) => {
       parameters: req.body.parameters,
     });
 
-    router.post('/analyze-enemy-coas', requireAuth, async (req, res) => {
+    router.post('/analyze-enemy-coas', aiPlanningLimiter, requireAuth, async (req, res) => {
       const scenarioId = req.body.scenarioId || 'default';
       const unitsForScenario = listUnits(scenarioId);
       const documents = Array.isArray(req.body.documents) && req.body.documents.length
@@ -189,7 +196,7 @@ router.post('/analysis', requireAuth, async (req, res) => {
       }
     });
 
-    router.post('/recommend-counter-moves', requireAuth, async (req, res) => {
+    router.post('/recommend-counter-moves', aiPlanningLimiter, requireAuth, async (req, res) => {
       const scenarioId = req.body.scenarioId || 'default';
       const unitsForScenario = listUnits(scenarioId);
       try {
@@ -209,7 +216,7 @@ router.post('/analysis', requireAuth, async (req, res) => {
       }
     });
 
-    router.post('/generate-opord', requireAuth, async (req, res) => {
+    router.post('/generate-opord', aiPlanningLimiter, requireAuth, async (req, res) => {
       try {
         const result = await generateOpord(req.body);
         return res.status(201).json(result);
