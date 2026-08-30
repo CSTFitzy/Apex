@@ -1,0 +1,143 @@
+import { Router, Request, Response } from 'express';
+import type pg from 'pg';
+import type { RedisClientType } from 'redis';
+import {
+  allocateResources,
+  buildSupplyLines,
+  calculateConvoyRoute,
+  createResupplyPlan,
+  forecastSupply,
+  listSupplyDepots,
+  type SupplyDepot,
+} from '../services/logistics.js';
+
+type CacheClient = Pick<RedisClientType, 'get' | 'setEx'> & { isReady?: boolean };
+
+async function readCache<T>(client: CacheClient | undefined, key: string): Promise<T | null> {
+  if (!client?.isReady) return null;
+  const cached = await client.get(key);
+  return cached ? (JSON.parse(cached) as T) : null;
+}
+
+async function writeCache(client: CacheClient | undefined, key: string, ttlSeconds: number, value: unknown) {
+  if (!client?.isReady) return;
+  await client.setEx(key, ttlSeconds, JSON.stringify(value));
+}
+
+export default function createSupplyRouter(pool: pg.Pool, redisClient?: CacheClient) {
+  const router = Router();
+
+  router.get('/depots', async (_req: Request, res: Response) => {
+    try {
+      const cacheKey = 'supply:depots';
+      const cached = await readCache<SupplyDepot[]>(redisClient, cacheKey);
+      if (cached) {
+        res.json({ depots: cached, source: 'cache' });
+        return;
+      }
+
+      const depots = await listSupplyDepots(pool);
+      await writeCache(redisClient, cacheKey, 60, depots);
+      res.json({ depots, source: 'database' });
+    } catch (error) {
+      console.error('Failed to list supply depots:', error);
+      res.status(500).json({ error: 'Failed to list supply depots' });
+    }
+  });
+
+  router.post('/request', async (req: Request, res: Response) => {
+    try {
+      const plan = await createResupplyPlan(pool, req.body);
+      res.status(201).json(plan);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create resupply request';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.get('/routes', async (req: Request, res: Response) => {
+    try {
+      const destination = {
+        lat: Number(req.query.endLat ?? req.query.lat),
+        lon: Number(req.query.endLon ?? req.query.lon),
+      };
+      const depots = await listSupplyDepots(pool);
+      const depot =
+        depots.find((candidate) => candidate.id === Number(req.query.depotId)) ??
+        depots.sort(
+          (a, b) =>
+            Math.hypot(a.location.lat - destination.lat, a.location.lon - destination.lon) -
+            Math.hypot(b.location.lat - destination.lat, b.location.lon - destination.lon)
+        )[0];
+
+      if (!depot || Number.isNaN(destination.lat) || Number.isNaN(destination.lon)) {
+        res.status(400).json({ error: 'depotId or destination lat/lon are required' });
+        return;
+      }
+
+      res.json({ route: calculateConvoyRoute(depot, destination) });
+    } catch (error) {
+      console.error('Failed to calculate convoy route:', error);
+      res.status(500).json({ error: 'Failed to calculate convoy route' });
+    }
+  });
+
+  router.get('/forecast', (req: Request, res: Response) => {
+    try {
+      const forecast = forecastSupply({
+        unitId: String(req.query.unitId ?? 'demo-unit'),
+        unitName: req.query.unitName ? String(req.query.unitName) : undefined,
+        hours: req.query.hours ? Number(req.query.hours) : 8,
+        combatIntensity: req.query.combatIntensity ? Number(req.query.combatIntensity) : 1,
+        currentInventory: {
+          Ammo: Number(req.query.ammo ?? 1500),
+          Fuel: Number(req.query.fuel ?? 900),
+          Medical: Number(req.query.medical ?? 250),
+          Rations: Number(req.query.rations ?? 1200),
+          Water: Number(req.query.water ?? 1400),
+        },
+        consumptionRates: {
+          Ammo: Number(req.query.ammoRate ?? 420),
+          Fuel: Number(req.query.fuelRate ?? 140),
+          Medical: Number(req.query.medicalRate ?? 50),
+          Rations: Number(req.query.rationsRate ?? 90),
+          Water: Number(req.query.waterRate ?? 110),
+        },
+      });
+      res.json(forecast);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to calculate forecast';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.post('/forecast', (req: Request, res: Response) => {
+    try {
+      res.json(forecastSupply(req.body));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to calculate forecast';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.post('/allocate', (req: Request, res: Response) => {
+    try {
+      res.json(allocateResources(req.body));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to allocate resources';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.post('/lines', async (req: Request, res: Response) => {
+    try {
+      const depots = await listSupplyDepots(pool);
+      res.json({ supplyLines: buildSupplyLines(depots, req.body.units ?? []) });
+    } catch (error) {
+      console.error('Failed to assess supply lines:', error);
+      res.status(500).json({ error: 'Failed to assess supply lines' });
+    }
+  });
+
+  return router;
+}

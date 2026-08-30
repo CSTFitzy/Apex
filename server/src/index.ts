@@ -13,6 +13,9 @@ import weatherRouter from './routes/weather.js';
 import terrainRouter from './routes/terrain.js';
 import documentsRouter from './routes/documents.js';
 import enemyRouter from './routes/enemy.js';
+import createSupplyRouter from './routes/supply.js';
+import createDatabaseRouter from './routes/database.js';
+import { initializeOptimizedDatabase } from './services/databaseOptimization.js';
 
 dotenv.config();
 
@@ -63,6 +66,8 @@ app.use('/api/weather', weatherRouter);
 app.use('/api/terrain', terrainRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/enemy', enemyRouter);
+app.use('/api/supply', createSupplyRouter(pool, redisClient));
+app.use('/api/database', createDatabaseRouter(pool));
 
 app.get('/api/map/data', async (req: Request, res: Response) => {
   try {
@@ -133,6 +138,7 @@ async function initializeDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await initializeOptimizedDatabase(pool);
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);

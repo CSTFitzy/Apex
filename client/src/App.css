@@ -827,6 +827,70 @@
   font-weight: 600;
 }
 
+/* ==== Logistics panel ==== */
+.logistics-section {
+  background-color: #1a2940;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.logistics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.logistics-chip {
+  border: 1px solid #2c4670;
+  border-radius: 4px;
+  padding: 8px;
+  background-color: #0f1423;
+  font-weight: 600;
+}
+
+.logistics-chip.ready {
+  color: #2ecc71;
+  border-color: #2ecc71;
+}
+
+.logistics-chip.standby {
+  color: #f1c40f;
+  border-color: #f1c40f;
+}
+
+.depot-card {
+  border-left: 4px solid #00b4d8;
+}
+
+.depot-card p,
+.logistics-section p {
+  margin: 4px 0 8px 0;
+  color: #b0bec5;
+}
+
+.inventory-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.inventory-bar {
+  height: 8px;
+  background-color: #0a0e27;
+  border: 1px solid #2c4670;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.inventory-bar div {
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71, #00b4d8);
+}
+
 /* ==== 2D/3D view toggle ==== */
 .view-toggle-btn {
   position: absolute;
