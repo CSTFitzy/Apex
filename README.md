@@ -11,6 +11,7 @@ Open-source tactical management system utilizing ODIN, military intelligence dat
 - **Weather Integration** - Multi-source meteorological data (Open-Meteo, MET Norway, OpenWeatherMap)
 - **OSINT Data** - Open-source intelligence aggregation and analysis
 - **Threat Visualization** - Heatmaps, timeline analysis, equipment tracking
+- **Supply Chain** - Indexed inventory for ammunition, fuel, and rations with consumption forecasts and route planning
 - **Offline Operation** - Full self-hosting capability
 - **No Vendor Lock-in** - Complete operational independence
 
@@ -55,6 +56,15 @@ See [API_INTEGRATIONS.md](./API_INTEGRATIONS.md) for code examples and integrati
 - ODIN Command & Control
 - Weather APIs (Open-Meteo, MET Norway, OpenWeatherMap)
 - OSINT Data Sources (Liveuamap, Oryx, ISW)
+
+## Supply Chain API
+
+Authenticated supply-chain endpoints are available under `/api/logistics`:
+
+- `GET` / `PUT /inventory` — list or upsert location inventory for `ammo`, `fuel`, or `rations`
+- `POST /inventory/:id/consumption` — record consumption atomically; requests exceeding available stock are rejected
+- `GET /inventory/:id/forecast?days=7` — forecast consumption from the previous 30 days and identify reorder risk
+- `GET` / `POST /routes` — list routes or create an optimized route between tracked locations; optional waypoint locations are ordered by nearest neighbor
 
 ## Visualization
 

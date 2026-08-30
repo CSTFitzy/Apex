@@ -63,6 +63,14 @@ export const api = {
   getWeatherForecast: (lat, lon) => request(`/weather/forecast?lat=${lat}&lon=${lon}`),
   getIntelligenceReports: () => request('/odin/reports'),
   getTacticalLocations: () => request('/tactical/locations'),
+  getSupplyInventory: (locationId) =>
+    request(`/logistics/inventory${locationId ? `?locationId=${locationId}` : ''}`),
+  saveSupplyInventory: (inventory) => request('/logistics/inventory', { method: 'PUT', body: JSON.stringify(inventory) }),
+  recordSupplyConsumption: (inventoryId, consumption) =>
+    request(`/logistics/inventory/${inventoryId}/consumption`, { method: 'POST', body: JSON.stringify(consumption) }),
+  getSupplyForecast: (inventoryId, days = 7) => request(`/logistics/inventory/${inventoryId}/forecast?days=${days}`),
+  getLogisticsRoutes: () => request('/logistics/routes'),
+  createLogisticsRoute: (route) => request('/logistics/routes', { method: 'POST', body: JSON.stringify(route) }),
 };
 
 export default api;
