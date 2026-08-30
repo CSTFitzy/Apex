@@ -898,3 +898,67 @@
   gap: 6px;
   margin-top: 8px;
 }
+
+/* Analytics Dashboard */
+.analytics-panel .kpi-section,
+.analytics-panel .bda-section,
+.analytics-panel .heatmap-selector {
+  background-color: #1a2940;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.analytics-controls {
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.analytics-controls select {
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.kpi-card {
+  background-color: #0f1423;
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-label {
+  font-size: 10px;
+  color: #90caf9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.heatmap-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.action-btn.secondary.active {
+  background-color: #00b4d8;
+  color: #0a0e27;
+}
+

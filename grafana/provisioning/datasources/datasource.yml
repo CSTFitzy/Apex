@@ -1,0 +1,20 @@
+apiVersion: 1
+
+# Grafana data source provisioning for Apex's analytics dashboards.
+# PostgreSQL/TimescaleDB stores unit status, casualty and mission events; see
+# server/src/routes/analytics.ts for the API that feeds this data (and the
+# events table it would persist to when TimescaleDB is deployed).
+datasources:
+  - name: Apex PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: apex
+    user: apex_user
+    isDefault: true
+    secureJsonData:
+      password: apex_password
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: true

@@ -1,0 +1,78 @@
+{
+  "uid": "apex-logistics",
+  "title": "Apex - Logistics & Supply Dashboard",
+  "tags": ["apex", "logistics"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-4h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "Supply Level per Unit",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT unit_name, ammo_pct, fuel_pct, medical_pct, rations_pct FROM supply_status WHERE time = (SELECT MAX(time) FROM supply_status)",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Resupply Rate vs Consumption",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT time, SUM(consumption_rate) AS \"Consumption\", SUM(resupply_rate) AS \"Resupply\" FROM supply_status WHERE $__timeFilter(time) GROUP BY time ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Supply Line Status",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT route_name, origin, destination, status FROM supply_lines ORDER BY status DESC",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "piechart",
+      "title": "Ammo/Fuel Distribution",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT unit_name, ammo_units FROM supply_status WHERE time = (SELECT MAX(time) FROM supply_status)",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Projected Supply Depletion Timeline",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT unit_name, projected_depletion_time FROM supply_projection ORDER BY projected_depletion_time ASC",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

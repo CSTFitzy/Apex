@@ -173,6 +173,8 @@ export interface TacticalUnit {
   route: LatLon[];
   status: 'active' | 'engaged' | 'destroyed' | 'withdrawn';
   strength: number;
+  /** Starting strength (defaults to initial `strength` if omitted) - used by BDA/KPI loss calculations. */
+  maxStrength?: number;
 }
 
 export interface SimulationEvent {
@@ -215,4 +217,107 @@ export interface UnitPrediction {
   casualtyForecastPct: number;
   engagementProbabilityPct: number;
   recommendations: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Analytics / Grafana-style tactical dashboard types (KPIs, BDA, heatmaps)
+// ---------------------------------------------------------------------------
+
+export type AnalyticsEventType =
+  | 'casualty_report'
+  | 'enemy_contact'
+  | 'engagement'
+  | 'fire_support'
+  | 'supply_status'
+  | 'unit_destroyed'
+  | 'objective_update';
+
+/** A single tactical event logged for KPI/BDA/heatmap analytics. */
+export interface AnalyticsEvent {
+  timestamp: number;
+  eventType: AnalyticsEventType;
+  unitId?: string;
+  location?: LatLon;
+  data?: Record<string, unknown>;
+}
+
+export interface MissionObjective {
+  name: string;
+  progressPct: number;
+}
+
+export interface KPIReport {
+  generatedAt: string;
+  friendly: {
+    unitCount: number;
+    totalPersonnel: number;
+    maxPersonnel: number;
+    strengthPct: number;
+    combatEffectivenessPct: number;
+    moralePct: number;
+    readiness: 'READY' | 'DEGRADED' | 'COMBAT_INEFFECTIVE';
+  };
+  enemy: {
+    unitCount: number;
+    estimatedStrength: number;
+    estimatedMaxStrength: number;
+    strengthPct: number;
+    threatLevel: 'MINIMAL' | 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  };
+  casualties: {
+    kia: number;
+    wia: number;
+    mia: number;
+    total: number;
+    ratePerMinute: number;
+    trend: 'INCREASING' | 'STABLE' | 'DECREASING';
+  };
+  mission: {
+    progressPct: number;
+    elapsedMinutes: number;
+    objectives: MissionObjective[];
+  };
+}
+
+export interface BDAUnitAssessment {
+  unitId: string;
+  unitName: string;
+  affiliation: Affiliation;
+  status: TacticalUnit['status'];
+  casualties: number;
+  lossPct: number;
+  severity: 'NONE' | 'LIGHT' | 'MODERATE' | 'CRITICAL';
+  minutesToCombatIneffective: number | null;
+}
+
+export interface BDAReport {
+  generatedAt: string;
+  perUnit: BDAUnitAssessment[];
+  timeline: Array<{ timestamp: number; unitId?: string; location?: LatLon; kia: number; wia: number; mia: number }>;
+  comparison: { friendlyDamage: number; enemyDamage: number };
+  destroyedUnits: Array<{ id: string; name: string }>;
+}
+
+export type HeatmapType =
+  | 'casualty'
+  | 'enemy_contact'
+  | 'engagement'
+  | 'fire_support'
+  | 'risk'
+  | 'supply_vulnerability'
+  | 'comms_blackout';
+
+export interface HeatmapCell {
+  lat: number;
+  lon: number;
+  count: number;
+  intensity: number;
+}
+
+export interface HeatmapResult {
+  type: HeatmapType;
+  cellSizeDeg: number;
+  generatedAt: string;
+  maxCount: number;
+  cells: HeatmapCell[];
 }

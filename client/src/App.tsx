@@ -7,17 +7,21 @@ import DocumentsPanel from './components/DocumentsPanel'
 import EnemyPanel from './components/EnemyPanel'
 import SimulationPanel from './components/SimulationPanel'
 import PredictionPanel from './components/PredictionPanel'
+import AnalyticsPanel from './components/AnalyticsPanel'
 import Cesium3DView from './components/Cesium3DView'
 import api from './api/client'
 import { buildAO, rectangleVertices } from './utils/geometry'
 import { pushHistory } from './utils/prediction'
 import { usePredictions } from './hooks/usePredictions'
 import type {
+  AnalyticsEvent,
   AOBounds,
   AreaOfOperations,
   CounterPlanResult,
   DocumentUploadResult,
   DrawMode,
+  HeatmapCell,
+  HeatmapType,
   LatLon,
   LosObserver,
   SpotHeight,
@@ -26,7 +30,8 @@ import type {
 } from './types'
 import './App.css'
 
-type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions'
+type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions' | 'analytics'
+const MAX_TRACKED_EVENTS = 500
 
 /** Observer eye height above ground level used by the LOS visibility tool. */
 const OBSERVER_HEIGHT_M = 1.5
@@ -64,6 +69,37 @@ function App() {
   const [units, setUnits] = useState<TacticalUnit[]>([])
   const [unitHistory, setUnitHistory] = useState<Record<string, LatLon[]>>({})
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+
+  // Analytics: structured tactical event log (feeds KPIs, BDA, heatmaps, AAR).
+  const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([])
+  const [missionStartTime, setMissionStartTime] = useState<number | null>(null)
+  const [activeHeatmap, setActiveHeatmap] = useState<HeatmapType | null>(null)
+  const [heatmapCells, setHeatmapCells] = useState<HeatmapCell[]>([])
+
+  const handleSimulationEvent = (event: AnalyticsEvent) => {
+    setMissionStartTime((prev) => prev ?? event.timestamp)
+    setAnalyticsEvents((prev) => [...prev, event].slice(-MAX_TRACKED_EVENTS))
+    api.post('/analytics/events', event).catch((err) => console.error('Failed to log analytics event:', err))
+  }
+
+  // Refresh the active heatmap's grid cells whenever the selected type or
+  // event log changes, so the map overlay tracks the simulation in real time.
+  useEffect(() => {
+    if (!activeHeatmap) {
+      setHeatmapCells([])
+      return
+    }
+    let cancelled = false
+    api
+      .post<{ cells: HeatmapCell[] }>('/analytics/heatmap', { type: activeHeatmap, events: analyticsEvents })
+      .then(({ data }) => {
+        if (!cancelled) setHeatmapCells(data.cells)
+      })
+      .catch((err) => console.error('Failed to load heatmap:', err))
+    return () => {
+      cancelled = true
+    }
+  }, [activeHeatmap, analyticsEvents])
 
   // Track a bounded position history per unit so the AI prediction models have
   // recent movement to extrapolate from (updates whenever unit positions change).
@@ -176,6 +212,9 @@ function App() {
           <button className={`nav-btn ${activeTab === 'predictions' ? 'active' : ''}`} onClick={() => setActiveTab('predictions')}>
             AI Predictions
           </button>
+          <button className={`nav-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+            Analytics
+          </button>
         </nav>
       </header>
 
@@ -204,6 +243,7 @@ function App() {
               units={units}
               viewshed={viewshed}
               predictions={predictions}
+              heatmapCells={heatmapCells}
             />
           ) : (
             <Cesium3DView center={aoCenter ?? mapCenter} ao={ao} observers={observers} units={units} />
@@ -255,6 +295,7 @@ function App() {
               units={units}
               onUnitsChange={setUnits}
               counterPlan={counterPlan}
+              onEvent={handleSimulationEvent}
             />
           </div>
           {activeTab === 'predictions' && (
@@ -263,6 +304,15 @@ function App() {
               predictions={predictions}
               loading={predictionsLoading}
               error={predictionsError}
+            />
+          )}
+          {activeTab === 'analytics' && (
+            <AnalyticsPanel
+              units={units}
+              events={analyticsEvents}
+              missionStartTime={missionStartTime}
+              activeHeatmap={activeHeatmap}
+              onHeatmapChange={setActiveHeatmap}
             />
           )}
         </aside>

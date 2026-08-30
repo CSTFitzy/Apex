@@ -1,0 +1,77 @@
+{
+  "uid": "apex-bda",
+  "title": "Apex - Battle Damage Assessment",
+  "tags": ["apex", "bda"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-2h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "barchart",
+      "title": "Damage by Unit Type",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT unit_type, SUM(kia) AS kia, SUM(wia) AS wia, SUM(mia) AS mia FROM casualty_events c JOIN unit_status u ON u.unit_id = c.unit_id WHERE $__timeFilter(c.time) GROUP BY unit_type",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Damage Timeline",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT time, SUM(kia + wia + mia) AS \"Casualties\" FROM casualty_events WHERE $__timeFilter(time) GROUP BY time ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "geomap",
+      "title": "Geographic Damage Distribution",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT latitude, longitude, COUNT(*) AS casualty_count FROM casualty_events WHERE $__timeFilter(time) GROUP BY latitude, longitude",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Infrastructure Status",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT facility_name, facility_type, status, damage_pct FROM infrastructure_status ORDER BY damage_pct DESC",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Recovery Rate Projection",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 18 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT unit_name, minutes_to_combat_ineffective FROM unit_status_projection WHERE minutes_to_combat_ineffective IS NOT NULL ORDER BY minutes_to_combat_ineffective ASC",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

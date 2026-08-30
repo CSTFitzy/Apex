@@ -1,0 +1,93 @@
+{
+  "uid": "apex-tactical-ops",
+  "title": "Apex - Tactical Operations Dashboard",
+  "tags": ["apex", "tactical-ops"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "gauge",
+      "title": "Friendly Force Strength",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT time, ROUND(100.0 * SUM(personnel_count) / NULLIF(SUM(max_personnel_count), 0), 1) AS \"Friendly Strength %\" FROM unit_status WHERE affiliation = 'friendly' AND $__timeFilter(time) GROUP BY time ORDER BY time DESC LIMIT 1",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Enemy Force Estimate",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT time, ROUND(100.0 * SUM(personnel_count) / NULLIF(SUM(max_personnel_count), 0), 1) AS \"Enemy Strength %\" FROM unit_status WHERE affiliation = 'hostile' AND $__timeFilter(time) GROUP BY time ORDER BY time DESC LIMIT 1",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Real-Time Casualty Counter",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT SUM(kia) + SUM(wia) + SUM(mia) AS \"Total Casualties\" FROM casualty_events WHERE $__timeFilter(time)",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "bargauge",
+      "title": "Mission Progress",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT objective_name, progress_pct FROM mission_objectives ORDER BY objective_name",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Engagement Timeline",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT time, COUNT(*) AS \"Engagements\" FROM tactical_events WHERE event_type = 'engagement' AND $__timeFilter(time) GROUP BY time ORDER BY time",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Unit Status Matrix",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT unit_id, unit_name, affiliation, status, personnel_count, max_personnel_count FROM unit_status WHERE time = (SELECT MAX(time) FROM unit_status) ORDER BY affiliation, unit_name",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

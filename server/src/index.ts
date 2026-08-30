@@ -13,6 +13,7 @@ import weatherRouter from './routes/weather.js';
 import terrainRouter from './routes/terrain.js';
 import documentsRouter from './routes/documents.js';
 import enemyRouter from './routes/enemy.js';
+import analyticsRouter from './routes/analytics.js';
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use('/api/weather', weatherRouter);
 app.use('/api/terrain', terrainRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/enemy', enemyRouter);
+app.use('/api/analytics', analyticsRouter);
 
 app.get('/api/map/data', async (req: Request, res: Response) => {
   try {

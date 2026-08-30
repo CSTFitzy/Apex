@@ -1,0 +1,15 @@
+apiVersion: 1
+
+# Auto-provisions the four custom Apex dashboards (Tactical Operations,
+# Battle Damage Assessment, Logistics & Supply, Tactical Heatmaps) on
+# container startup, so they're available immediately without manual import.
+providers:
+  - name: Apex Dashboards
+    orgId: 1
+    folder: Apex
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

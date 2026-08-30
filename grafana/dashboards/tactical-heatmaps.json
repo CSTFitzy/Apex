@@ -1,0 +1,64 @@
+{
+  "uid": "apex-heatmaps",
+  "title": "Apex - Tactical Heatmap Dashboard",
+  "tags": ["apex", "heatmap"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "geomap",
+      "title": "Casualty Density Heatmap",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT latitude, longitude, COUNT(*) AS intensity FROM casualty_events WHERE $__timeFilter(time) GROUP BY latitude, longitude",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "geomap",
+      "title": "Enemy Contact Frequency Heatmap",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT latitude, longitude, COUNT(*) AS intensity FROM tactical_events WHERE event_type = 'enemy_contact' AND $__timeFilter(time) GROUP BY latitude, longitude",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "geomap",
+      "title": "Engagement Hotspots",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT latitude, longitude, COUNT(*) AS intensity FROM tactical_events WHERE event_type = 'engagement' AND $__timeFilter(time) GROUP BY latitude, longitude",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "geomap",
+      "title": "High-Risk Zone Identification",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "Apex PostgreSQL" },
+          "rawSql": "SELECT latitude, longitude, COUNT(*) AS intensity FROM tactical_events WHERE event_type IN ('casualty_report', 'engagement', 'enemy_contact') AND $__timeFilter(time) GROUP BY latitude, longitude",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

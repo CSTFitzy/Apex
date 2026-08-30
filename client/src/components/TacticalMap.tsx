@@ -19,6 +19,7 @@ import ms from 'milsymbol';
 import type {
   AreaOfOperations,
   DrawMode,
+  HeatmapCell,
   LatLon,
   LosObserver,
   SpotHeight,
@@ -66,6 +67,8 @@ interface Props {
   viewshed: ViewshedResult | null;
   /** AI-forecast future positions for hostile units, rendered as confidence halos. */
   predictions?: UnitPrediction[];
+  /** Active tactical heatmap grid cells (casualty/contact/risk/etc.), rendered as a color overlay. */
+  heatmapCells?: HeatmapCell[];
 }
 
 function unitIcon(unit: TacticalUnit): L.DivIcon {
@@ -83,6 +86,13 @@ function unitIcon(unit: TacticalUnit): L.DivIcon {
 }
 
 const toLatLon = (latlng: L.LatLng): LatLon => ({ lat: latlng.lat, lon: latlng.lng });
+
+/** Maps a 0-255 heatmap intensity to a blue (low) -> red (high) color, matching the legend used in the Analytics panel. */
+function heatmapColor(intensity: number): string {
+  const pct = Math.max(0, Math.min(255, intensity)) / 255;
+  const hue = (1 - pct) * 220; // 220 (blue) -> 0 (red)
+  return `hsl(${hue}, 90%, 50%)`;
+}
 
 /** Green/red visibility disc rendered from a ray-cast viewshed. */
 function ViewshedOverlay({ viewshed }: { viewshed: ViewshedResult }) {
@@ -330,6 +340,7 @@ export default function TacticalMap({
   units,
   viewshed,
   predictions = [],
+  heatmapCells = [],
 }: Props) {
   const handleAOComplete = (nextAO: AreaOfOperations) => {
     onAOChange(nextAO);
@@ -465,6 +476,21 @@ export default function TacticalMap({
             <br />Strength: {unit.strength}
           </Popup>
         </Marker>
+      ))}
+
+      {heatmapCells.map((cell, idx) => (
+        <Circle
+          key={`heatmap-${idx}`}
+          center={[cell.lat, cell.lon]}
+          radius={200 + (cell.intensity / 255) * 300}
+          pathOptions={{
+            color: heatmapColor(cell.intensity),
+            weight: 0,
+            fillColor: heatmapColor(cell.intensity),
+            fillOpacity: 0.15 + (cell.intensity / 255) * 0.35,
+            interactive: false,
+          }}
+        />
       ))}
 
       {predictions.map((prediction) =>

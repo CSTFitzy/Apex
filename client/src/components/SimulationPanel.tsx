@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
+import type { AnalyticsEvent, CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
 
 interface Props {
   aoCenter: LatLon | null;
   units: TacticalUnit[];
   onUnitsChange: (units: TacticalUnit[]) => void;
   counterPlan: CounterPlanResult | null;
+  /** Emits structured tactical events (casualty reports, engagements) for the Analytics dashboard. */
+  onEvent?: (event: AnalyticsEvent) => void;
 }
 
 const TICK_MS = 1000;
@@ -35,6 +37,7 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
       route: [friendlyStart, center],
       status: 'active',
       strength: 100,
+      maxStrength: 100,
     },
     {
       id: 'enemy-1',
@@ -45,11 +48,12 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
       route: [enemyStart, center],
       status: 'active',
       strength: 90,
+      maxStrength: 90,
     },
   ];
 }
 
-export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan }: Props) {
+export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan, onEvent }: Props) {
   const [running, setRunning] = useState(false);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -103,6 +107,35 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           if (next[friendlyIdx].strength === 0) next[friendlyIdx].status = 'destroyed';
           if (next[hostileIdx].strength === 0) next[hostileIdx].status = 'destroyed';
 
+          const timestamp = Date.now();
+          onEvent?.({
+            timestamp,
+            eventType: 'enemy_contact',
+            unitId: hostile.id,
+            location: hostile.position,
+            data: { friendlyUnitId: friendly.id },
+          });
+          onEvent?.({
+            timestamp,
+            eventType: 'casualty_report',
+            unitId: friendly.id,
+            location: friendly.position,
+            data: { kia: Math.round(friendlyDamage * 0.3), wia: Math.round(friendlyDamage * 0.7), mia: 0 },
+          });
+          onEvent?.({
+            timestamp,
+            eventType: 'casualty_report',
+            unitId: hostile.id,
+            location: hostile.position,
+            data: { kia: Math.round(hostileDamage * 0.3), wia: Math.round(hostileDamage * 0.7), mia: 0 },
+          });
+          if (next[friendlyIdx].status === 'destroyed') {
+            onEvent?.({ timestamp, eventType: 'unit_destroyed', unitId: friendly.id, location: friendly.position });
+          }
+          if (next[hostileIdx].status === 'destroyed') {
+            onEvent?.({ timestamp, eventType: 'unit_destroyed', unitId: hostile.id, location: hostile.position });
+          }
+
           const tactic = counterPlan?.matchedDoctrine[0]?.tactics[0];
           log(
             `CONTACT: ${friendly.name} engaged ${hostile.name}. ` +
@@ -127,7 +160,7 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
     }
 
     onUnitsChange(next);
-  }, [counterPlan, log, onUnitsChange]);
+  }, [counterPlan, log, onEvent, onUnitsChange]);
 
   const togglePlay = () => {
     if (running) {
