@@ -68,10 +68,8 @@ interface Props {
   viewshed: ViewshedResult | null;
   /** AI-forecast future positions for hostile units, rendered as confidence halos. */
   predictions?: UnitPrediction[];
-<<<<<<< HEAD
   /** Active tactical heatmap grid cells (casualty/contact/risk/etc.), rendered as a color overlay. */
   heatmapCells?: HeatmapCell[];
-=======
   /** Stations currently transmitting on a radio net, with their signal coverage. */
   transmitters?: CommsTransmitter[];
 }
@@ -85,7 +83,6 @@ export interface CommsTransmitter {
   coverageM: number;
   color: string;
   channelName: string;
->>>>>>> origin/feature/complete-battle-management-system
 }
 
 function unitIcon(unit: TacticalUnit): L.DivIcon {
@@ -357,11 +354,8 @@ export default function TacticalMap({
   units,
   viewshed,
   predictions = [],
-<<<<<<< HEAD
   heatmapCells = [],
-=======
   transmitters = [],
->>>>>>> origin/feature/complete-battle-management-system
 }: Props) {
   const handleAOComplete = (nextAO: AreaOfOperations) => {
     onAOChange(nextAO);
@@ -499,7 +493,6 @@ export default function TacticalMap({
         </Marker>
       ))}
 
-<<<<<<< HEAD
       {heatmapCells.map((cell, idx) => (
         <Circle
           key={`heatmap-${idx}`}
@@ -513,7 +506,8 @@ export default function TacticalMap({
             interactive: false,
           }}
         />
-=======
+      ))}
+
       {/* Communications overlay: signal coverage and an active-transmission marker. */}
       {transmitters.map((tx) => (
         <Fragment key={`tx-${tx.unitId}`}>
@@ -539,7 +533,6 @@ export default function TacticalMap({
             </Tooltip>
           </CircleMarker>
         </Fragment>
->>>>>>> origin/feature/complete-battle-management-system
       ))}
 
       {predictions.map((prediction) =>
