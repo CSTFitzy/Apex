@@ -1,11 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
+import type {
+  AAREvent,
+  AARFrame,
+  AARUnitSnapshot,
+  CounterPlanResult,
+  LatLon,
+  SimulationEvent,
+  TacticalUnit,
+} from '../types';
+import api from '../api/client';
 
 interface Props {
   aoCenter: LatLon | null;
   units: TacticalUnit[];
   onUnitsChange: (units: TacticalUnit[]) => void;
   counterPlan: CounterPlanResult | null;
+}
+
+function toSnapshot(units: TacticalUnit[]): AARUnitSnapshot[] {
+  return units.map((u) => ({
+    id: u.id,
+    name: u.name,
+    affiliation: u.affiliation,
+    position: u.position,
+    status: u.status,
+    strength: u.strength,
+  }));
 }
 
 const TICK_MS = 1000;
@@ -52,9 +72,29 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
 export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan }: Props) {
   const [running, setRunning] = useState(false);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
+  const [aarStatus, setAarStatus] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const unitsRef = useRef(units);
   unitsRef.current = units;
+
+  // AAR event-log recording: every tick appends a "frame" (full unit snapshot
+  // + optional tactical event) so the operation can later be replayed and
+  // analyzed in the After-Action Review panel.
+  const eventIdRef = useRef(1);
+  const framesRef = useRef<AARFrame[]>([]);
+  const startedAtRef = useRef<number | null>(null);
+
+  const pushFrame = useCallback(
+    (unitsSnapshot: TacticalUnit[], eventType?: AAREvent['eventType'], message?: string, unitIds?: string[]) => {
+      const timestamp = Date.now();
+      let event: AAREvent | undefined;
+      if (eventType && message) {
+        event = { eventId: eventIdRef.current++, timestamp, eventType, message, unitIds };
+      }
+      framesRef.current = [...framesRef.current, { timestamp, units: toSnapshot(unitsSnapshot), event }];
+    },
+    []
+  );
 
   const log = useCallback((message: string) => {
     setEvents((prev) => [{ timestamp: Date.now(), message }, ...prev].slice(0, 50));
@@ -65,7 +105,40 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
     const defaults = buildDefaultUnits(aoCenter);
     onUnitsChange(defaults);
     setEvents([]);
+    setAarStatus(null);
+    eventIdRef.current = 1;
+    framesRef.current = [];
+    startedAtRef.current = Date.now();
     log('Simulation initialized: friendly and enemy forces deployed to start positions.');
+    pushFrame(defaults, 'operation_start', 'Simulation initialized: friendly and enemy forces deployed to start positions.');
+  };
+
+  const endOperation = async () => {
+    if (framesRef.current.length === 0) {
+      setAarStatus('No operation data recorded yet.');
+      return;
+    }
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+      setRunning(false);
+    }
+    const endedAt = Date.now();
+    pushFrame(unitsRef.current, 'operation_end', 'Operation ended by commander.');
+    setAarStatus('Generating After-Action Review...');
+    try {
+      const { data } = await api.post('/aar/generate', {
+        name: `Operation ${new Date(startedAtRef.current ?? endedAt).toLocaleString()}`,
+        startedAt: startedAtRef.current ?? endedAt,
+        endedAt,
+        initialUnits: framesRef.current[0]?.units ?? toSnapshot(unitsRef.current),
+        frames: framesRef.current,
+      });
+      setAarStatus(`AAR generated (${data.operationId}). See the After-Action Review tab.`);
+    } catch (err) {
+      console.error(err);
+      setAarStatus('Failed to generate AAR.');
+    }
   };
 
   const tick = useCallback(() => {
@@ -104,11 +177,12 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           if (next[hostileIdx].strength === 0) next[hostileIdx].status = 'destroyed';
 
           const tactic = counterPlan?.matchedDoctrine[0]?.tactics[0];
-          log(
+          const contactMessage =
             `CONTACT: ${friendly.name} engaged ${hostile.name}. ` +
-              `${hostile.name} suffered ${hostileDamage} casualties, ${friendly.name} suffered ${friendlyDamage} casualties.` +
-              (tactic ? ` Enemy is executing doctrine: "${tactic}".` : '')
-          );
+            `${hostile.name} suffered ${hostileDamage} casualties, ${friendly.name} suffered ${friendlyDamage} casualties.` +
+            (tactic ? ` Enemy is executing doctrine: "${tactic}".` : '');
+          log(contactMessage);
+          pushFrame(next, 'combat_action', contactMessage, [friendly.id, hostile.id]);
         }
       }
     }
@@ -121,13 +195,19 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           const action = counterPlan?.matchedDoctrine[0]?.tactics[
             Math.floor(Math.random() * (counterPlan?.matchedDoctrine[0]?.tactics.length || 1))
           ];
-          log(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
+          const moveMessage = `${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`;
+          log(moveMessage);
+          pushFrame(next, 'unit_movement', moveMessage, [unit.id]);
+        } else {
+          pushFrame(next);
         }
+      } else {
+        pushFrame(next);
       }
     }
 
     onUnitsChange(next);
-  }, [counterPlan, log, onUnitsChange]);
+  }, [counterPlan, log, onUnitsChange, pushFrame]);
 
   const togglePlay = () => {
     if (running) {
@@ -161,8 +241,12 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
         <button className="action-btn play-btn" onClick={togglePlay} disabled={units.length === 0}>
           {running ? '⏸ Pause' : '▶ Play'}
         </button>
+        <button className="action-btn" onClick={endOperation} disabled={units.length === 0}>
+          🏁 End Operation &amp; Generate AAR
+        </button>
       </div>
       {!aoCenter && <p className="hint-text">Define an operational area first to deploy forces.</p>}
+      {aarStatus && <p className="hint-text">{aarStatus}</p>}
 
       <div className="unit-status-list">
         <h3>Unit Status</h3>
