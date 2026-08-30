@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import api from '../utils/api.js';
 
 const BASE_LAT = 34.05;
 const BASE_LNG = -118.25;
@@ -34,21 +35,64 @@ export default function SimulationPanel({ onEvent, onUnitsChange }) {
   const [units, setUnits] = useState(seedUnits);
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState([]);
+  const [operationId, setOperationId] = useState(null);
+  const [bookmarkLabel, setBookmarkLabel] = useState('');
   const unitsRef = useRef(units);
   unitsRef.current = units;
+  const operationIdRef = useRef(operationId);
+  operationIdRef.current = operationId;
 
   useEffect(() => {
     onUnitsChange?.(units);
   }, [units, onUnitsChange]);
+
+  // Automatically start AAR recording the first time forces are deployed
+  // (simulation started), so live simulations are always captured for
+  // after-action review. Ends the recording when the simulation is reset.
+  useEffect(() => {
+    if (running && !operationIdRef.current) {
+      api
+        .startAAROperation({ name: `Live Simulation ${new Date().toLocaleString()}` })
+        .then((res) => setOperationId(res.operation.id))
+        .catch(() => {
+          // AAR recording is best-effort; the simulation still runs locally.
+        });
+    }
+  }, [running]);
 
   const emitEvent = useCallback(
     (event) => {
       const enriched = { ...event, timestamp: new Date().toISOString() };
       setLog((prev) => [enriched, ...prev].slice(0, 50));
       onEvent?.(enriched);
+      if (operationIdRef.current) {
+        api.recordAAREvent(operationIdRef.current, enriched).catch(() => {
+          // Streaming to AAR shouldn't interrupt the local simulation.
+        });
+      }
     },
     [onEvent]
   );
+
+  // Stream a frame of current unit state to the AAR recorder every time the
+  // roster changes (position/strength/status updates) while an operation is
+  // being recorded.
+  useEffect(() => {
+    if (!operationId) return;
+    api.recordAARFrame(operationId, units).catch(() => {
+      // Non-fatal; frame streaming can be retried on the next tick.
+    });
+  }, [operationId, units]);
+
+  const addBookmark = useCallback(() => {
+    if (!operationIdRef.current || !bookmarkLabel.trim()) return;
+    api
+      .addAARBookmark(operationIdRef.current, { label: bookmarkLabel })
+      .then(() => setBookmarkLabel(''))
+      .catch(() => {
+        // Non-fatal; bookmark can be retried.
+      });
+  }, [bookmarkLabel]);
 
   const applyCasualty = useCallback(
     (unitId, severity) => {
@@ -138,6 +182,12 @@ export default function SimulationPanel({ onEvent, onUnitsChange }) {
     setRunning(false);
     setUnits(seedUnits());
     setLog([]);
+    if (operationIdRef.current) {
+      api.endAAROperation(operationIdRef.current).catch(() => {
+        // Non-fatal; the operation remains recorded server-side regardless.
+      });
+    }
+    setOperationId(null);
   };
 
   return (
@@ -149,6 +199,21 @@ export default function SimulationPanel({ onEvent, onUnitsChange }) {
           <button className="link-button" onClick={reset}>Reset</button>
         </div>
       </div>
+
+      {operationId && (
+        <div className="simulation-aar-controls">
+          <span>AAR recording: {operationId.slice(0, 8)}</span>
+          <input
+            type="text"
+            placeholder="Bookmark label"
+            value={bookmarkLabel}
+            onChange={(e) => setBookmarkLabel(e.target.value)}
+          />
+          <button onClick={addBookmark} disabled={!bookmarkLabel.trim()}>
+            Add Bookmark
+          </button>
+        </div>
+      )}
 
       <table className="simulation-unit-table">
         <thead>

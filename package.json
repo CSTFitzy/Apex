@@ -13,6 +13,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cesium": "^1.110.0",
@@ -25,6 +26,7 @@
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "mapbox-gl": "^2.15.0",
+    "openai": "^7.8.0",
     "pg": "^8.11.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",

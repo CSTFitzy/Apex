@@ -25,6 +25,7 @@ import tacticalRoutes from './routes/tactical.js';
 import supplyRoutes from './routes/supply.js';
 import analyticsRoutes from './routes/analytics.js';
 import messagesRoutes from './routes/messages.js';
+import aarRoutes from './routes/aar.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -120,6 +121,7 @@ app.use('/api/tactical', tacticalRoutes);
 app.use('/api/supply', supplyRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/aar', aarRoutes);
 
 /* ------------------------------------------------------------------ */
 /* 404 + error handling                                                 */
