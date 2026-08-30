@@ -112,6 +112,16 @@ export const api = {
     request('/auth/register', { method: 'POST', body: JSON.stringify({ username, email, password }) }),
   getWeatherForecast: (lat, lon) => request(`/weather/forecast?lat=${lat}&lon=${lon}`),
   getIntelligenceReports: () => request('/odin/reports'),
+
+  // Area of operations (AOO) terrain & weather analysis.
+  analyzeTerrain: (lat, lon, radiusKm) =>
+    request(`/terrain/analyze?lat=${lat}&lon=${lon}&radius=${radiusKm}`),
+  getTerrainReport: (lat, lon, radiusKm, name) =>
+    requestText(
+      `/terrain/report?lat=${lat}&lon=${lon}&radius=${radiusKm}` +
+        (name ? `&name=${encodeURIComponent(name)}` : '')
+    ),
+
   getTacticalLocations: () => request('/tactical/locations'),
   getKPIs: (units, events) => request('/analytics/kpis', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getBDA: (units, events) => request('/analytics/bda', { method: 'POST', body: JSON.stringify({ units, events }) }),

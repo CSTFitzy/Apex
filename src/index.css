@@ -120,6 +120,7 @@ label {
 }
 
 .weather-widget,
+.aoo-panel,
 .intelligence-panel,
 .analysis-chart,
 .simulation-panel,
@@ -131,9 +132,37 @@ label {
 }
 
 .weather-widget-error,
+.aoo-panel-error,
 .intelligence-panel-error,
 .analytics-panel-error {
   color: var(--color-danger);
+}
+
+.aoo-panel label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.aoo-panel input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.aoo-summary {
+  margin: 0.75rem 0;
+  padding-left: 1.1rem;
+}
+
+.aoo-report {
+  max-height: 260px;
+  overflow: auto;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  background: var(--color-bg, #0d1117);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.5rem;
 }
 
 .tab-hidden {

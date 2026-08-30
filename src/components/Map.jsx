@@ -8,15 +8,30 @@ const DEFAULT_ZOOM = 3;
 
 /**
  * Tactical map component built on Leaflet.
- * Renders tactical locations as markers, and can render a color-coded
- * tactical heatmap overlay (casualties, enemy contact, risk, etc - see
- * server/analytics/engine.js) computed from the active simulation.
+ * Renders tactical locations as markers, can render a color-coded tactical
+ * heatmap overlay (casualties, enemy contact, risk, etc - see
+ * server/analytics/engine.js) computed from the active simulation, and lets
+ * the user click anywhere on Earth to pick an area of operations (AOO).
+ *
+ * @param {object} props
+ * @param {Array} [props.locations] - Tactical locations to render as markers.
+ * @param {object} [props.heatmap] - Analytics heatmap overlay.
+ * @param {function} [props.onSelect] - Called with { latitude, longitude } on map click.
+ * @param {object} [props.aoo] - Currently selected AOO ({ latitude, longitude }).
+ * @param {number} [props.aooRadiusKm] - Radius of the AOO boundary circle, in km.
  */
-export default function Map({ locations = [], heatmap = null }) {
+export default function Map({ locations = [], heatmap = null, onSelect, aoo = null, aooRadiusKm = 5 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const heatLayerRef = useRef(null);
+  const aooLayerRef = useRef(null);
+  const onSelectRef = useRef(onSelect);
+
+  // Keep the latest click handler without re-initializing the map.
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
 
   // Initialize the map once.
   useEffect(() => {
@@ -29,11 +44,40 @@ export default function Map({ locations = [], heatmap = null }) {
       maxZoom: 19,
     }).addTo(mapRef.current);
 
+    // Click anywhere on Earth to pick the area of operations.
+    mapRef.current.on('click', (event) => {
+      onSelectRef.current?.({ latitude: event.latlng.lat, longitude: event.latlng.lng });
+    });
+
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
     };
   }, []);
+
+  // Draw the selected area of operations (centre marker + boundary circle).
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    if (aooLayerRef.current) {
+      aooLayerRef.current.remove();
+      aooLayerRef.current = null;
+    }
+
+    if (aoo && Number.isFinite(aoo.latitude) && Number.isFinite(aoo.longitude)) {
+      const center = [aoo.latitude, aoo.longitude];
+      aooLayerRef.current = L.layerGroup([
+        L.circleMarker(center, { radius: 5, color: '#2f81f7', fillOpacity: 1 }),
+        L.circle(center, {
+          radius: Math.max(aooRadiusKm, 0) * 1000,
+          color: '#2f81f7',
+          weight: 2,
+          dashArray: '6 6',
+          fillOpacity: 0.08,
+        }),
+      ]).addTo(mapRef.current);
+    }
+  }, [aoo, aooRadiusKm]);
 
   // Sync markers whenever the locations list changes.
   useEffect(() => {
