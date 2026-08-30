@@ -132,3 +132,157 @@ label {
 .intelligence-panel-error {
   color: var(--color-danger);
 }
+
+.dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dashboard-tabs button {
+  background: transparent;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.dashboard-tabs button.tab-active {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.tab-hidden {
+  display: none;
+}
+
+.dashboard-comms {
+  flex: 1;
+  padding: 1rem;
+}
+
+.comms-panel {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 1rem;
+  height: 100%;
+}
+
+.comms-messages,
+.comms-presence,
+.voice-call-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.comms-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.comms-message-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comms-message,
+.comms-message-own {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: baseline;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.comms-message-own {
+  background: rgba(47, 129, 247, 0.15);
+}
+
+.comms-message-author {
+  font-weight: 600;
+}
+
+.comms-message-time {
+  margin-left: auto;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.comms-typing {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.comms-input-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.comms-input-form input {
+  flex: 1;
+}
+
+.comms-error {
+  color: var(--color-danger);
+}
+
+.comms-empty {
+  color: var(--color-muted);
+}
+
+.comms-presence-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.comms-presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3fb950;
+  display: inline-block;
+}
+
+.call-status {
+  font-weight: 600;
+}
+
+.call-active,
+.call-incoming {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0.5rem 0;
+}
+
+.call-hangup,
+.call-reject {
+  background: var(--color-danger);
+}
+
+.call-duration {
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.call-devices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
