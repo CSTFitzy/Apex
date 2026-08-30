@@ -33,6 +33,8 @@ yarn-error.log*
 pids/
 *.pid
 *.seed
+server/uploads/documents/*
+!server/uploads/documents/.gitkeep
 
 # Coverage
 /coverage

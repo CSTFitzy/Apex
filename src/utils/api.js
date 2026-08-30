@@ -101,6 +101,31 @@ async function requestText(path, options = {}) {
   return { contentType, body: text };
 }
 
+async function requestForm(path, formData, options = {}) {
+  const token = getToken();
+  const headers = {
+    ...(token ? { Authorization: buildAuthHeader(token) } : {}),
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    method: options.method || 'POST',
+    body: formData,
+    headers,
+  });
+  const contentType = response.headers.get('content-type') || '';
+  const body = contentType.includes('application/json') ? await response.json() : null;
+
+  if (!response.ok) {
+    const error = new Error((body && body.error) || `Request failed with status ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  return body;
+}
+
 export const api = {
   get: (path) => request(path, { method: 'GET' }),
   post: (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
@@ -123,6 +148,31 @@ export const api = {
     ),
 
   getTacticalLocations: () => request('/tactical/locations'),
+  getTacticalUnits: (scenarioId = 'default') => request(`/tactical/units?scenarioId=${encodeURIComponent(scenarioId)}`),
+  saveTacticalUnit: (unit) => request('/tactical/units', { method: 'POST', body: JSON.stringify(unit) }),
+  deleteTacticalUnit: (unitId) => request(`/tactical/units/${encodeURIComponent(unitId)}`, { method: 'DELETE' }),
+  getTacticalMarkups: (scenarioId = 'default') =>
+    request(`/tactical/markups/${encodeURIComponent(scenarioId)}`),
+  saveTacticalMarkups: (payload) => request('/tactical/markups', { method: 'POST', body: JSON.stringify(payload) }),
+  exportTacticalMarkups: (scenarioId = 'default') =>
+    requestText(`/tactical/markups/${encodeURIComponent(scenarioId)}/export`),
+  uploadTacticalDocument: ({ file, scenarioId = 'default', tags = '' }) => {
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('scenarioId', scenarioId);
+    formData.append('tags', tags);
+    return requestForm('/tactical/documents/upload', formData);
+  },
+  getTacticalDocuments: (scenarioId = 'default') =>
+    request(`/tactical/documents?scenarioId=${encodeURIComponent(scenarioId)}`),
+  searchTacticalDocuments: (query, scenarioId = 'default') =>
+    request(
+      `/tactical/documents/search?q=${encodeURIComponent(query)}&scenarioId=${encodeURIComponent(scenarioId)}`
+    ),
+  getTacticalDocumentPreview: (documentId) =>
+    request(`/tactical/documents/${encodeURIComponent(documentId)}/preview`),
+  deleteTacticalDocument: (documentId) =>
+    request(`/tactical/documents/${encodeURIComponent(documentId)}`, { method: 'DELETE' }),
   getKPIs: (units, events) => request('/analytics/kpis', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getBDA: (units, events) => request('/analytics/bda', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getHeatmap: (units, events, type) =>
