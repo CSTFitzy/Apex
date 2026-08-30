@@ -173,6 +173,16 @@ export const api = {
     request(`/tactical/documents/${encodeURIComponent(documentId)}/preview`),
   deleteTacticalDocument: (documentId) =>
     request(`/tactical/documents/${encodeURIComponent(documentId)}`, { method: 'DELETE' }),
+  analyzeEnemyCoas: (payload) =>
+    request('/tactical/analyze-enemy-coas', { method: 'POST', body: JSON.stringify(payload) }),
+  recommendCounterMoves: (payload) =>
+    request('/tactical/recommend-counter-moves', { method: 'POST', body: JSON.stringify(payload) }),
+  generateOpord: (payload) =>
+    request('/tactical/generate-opord', { method: 'POST', body: JSON.stringify(payload) }),
+  saveTacticalScenario: (payload) =>
+    request('/tactical/scenarios', { method: 'POST', body: JSON.stringify(payload) }),
+  getTacticalScenario: (scenarioId) =>
+    request(`/tactical/scenarios/${encodeURIComponent(scenarioId)}`),
   getKPIs: (units, events) => request('/analytics/kpis', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getBDA: (units, events) => request('/analytics/bda', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getHeatmap: (units, events, type) =>
