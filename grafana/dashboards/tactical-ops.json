@@ -1,0 +1,100 @@
+{
+  "id": null,
+  "uid": "apex-tactical-ops",
+  "title": "Apex - Tactical Ops",
+  "description": "Live tactical KPIs: friendly/enemy strength, readiness, morale, combat effectiveness, casualty rate/trend, and mission progress. Queries assume analytics snapshots are persisted to a `tactical_kpis` hypertable/table (see grafana/README or the analytics engine in server/analytics/engine.js for the field definitions).",
+  "tags": ["apex", "tactical", "kpi"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Friendly Strength",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT friendly_strength AS value FROM tactical_kpis ORDER BY generated_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Enemy Strength",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT enemy_strength AS value FROM tactical_kpis ORDER BY generated_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "gauge",
+      "title": "Combat Effectiveness",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT combat_effectiveness AS value FROM tactical_kpis ORDER BY generated_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "Mission Progress",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent" }, "overrides": [] },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT mission_progress AS value FROM tactical_kpis ORDER BY generated_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Readiness & Morale Trend",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT generated_at AS time, friendly_readiness AS \"Readiness\", friendly_morale AS \"Morale\" FROM tactical_kpis WHERE $__timeFilter(generated_at) ORDER BY generated_at",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Casualty Rate Trend",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT generated_at AS time, casualty_rate AS \"Casualty Rate (per min)\" FROM tactical_kpis WHERE $__timeFilter(generated_at) ORDER BY generated_at",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

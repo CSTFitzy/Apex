@@ -1,0 +1,71 @@
+{
+  "id": null,
+  "uid": "apex-logistics-supply",
+  "title": "Apex - Logistics & Supply",
+  "description": "Unit supply levels and supply-vulnerability heatmap-derived risk, for logistics/resupply planning. Queries assume unit snapshots are persisted to a `units` table (id, name, side, supply_level, comms_status, position_lat, position_lng, updated_at).",
+  "tags": ["apex", "tactical", "logistics"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Units Below 50% Supply",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS value FROM units WHERE side = 'friendly' AND supply_level < 50 AND updated_at = (SELECT MAX(updated_at) FROM units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Average Friendly Supply Level",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT AVG(supply_level) AS value FROM units WHERE side = 'friendly' AND updated_at = (SELECT MAX(updated_at) FROM units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Units in Comms Blackout",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS value FROM units WHERE comms_status = 'blackout' AND updated_at = (SELECT MAX(updated_at) FROM units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Supply Status by Unit",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT name AS \"Unit\", side AS \"Side\", supply_level AS \"Supply %\", comms_status AS \"Comms\" FROM units WHERE updated_at = (SELECT MAX(updated_at) FROM units) ORDER BY supply_level ASC",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

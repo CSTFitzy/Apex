@@ -11,6 +11,7 @@ Open-source tactical management system utilizing ODIN, military intelligence dat
 - **Weather Integration** - Multi-source meteorological data (Open-Meteo, MET Norway, OpenWeatherMap)
 - **OSINT Data** - Open-source intelligence aggregation and analysis
 - **Threat Visualization** - Heatmaps, timeline analysis, equipment tracking
+- **Real-Time Analytics** - Live KPIs, battle damage assessment, and 7 tactical heatmaps computed from the active simulation (see [Real-Time Analytics](#real-time-analytics) below)
 - **Offline Operation** - Full self-hosting capability
 - **No Vendor Lock-in** - Complete operational independence
 
@@ -63,6 +64,17 @@ See [VISUALIZATION.md](./VISUALIZATION.md) for data visualization and mapping li
 - Mapbox GL for advanced features
 - Chart.js for dashboards
 - Cesium.js for 3D terrain visualization
+
+## Real-Time Analytics
+
+During an active simulation the **Analytics** tab in the dashboard displays live KPIs (friendly/enemy strength, readiness, morale, combat effectiveness, casualty rate/trend, mission progress), a per-unit battle damage assessment (BDA) table, and 7 toggleable tactical heatmaps (casualty, enemy contact, engagement, fire support, risk, supply vulnerability, comms blackout).
+
+Analytics computation is stateless: the client (via the **Simulation** tab) supplies the current `units` and `events` and the server computes results on the fly (`server/analytics/engine.js`). Endpoints:
+- `POST /api/analytics/kpis`, `/bda`, `/heatmap` - compute analytics from `{ units, events }`
+- `POST /api/analytics/events` - ingest a tactical event and broadcast it to subscribed WebSocket clients (topic `analytics`)
+- `GET /api/analytics/events` - fetch the recent event log buffer
+
+An optional Grafana instance (`docker-compose up -d grafana`, http://localhost:3001, default `admin`/`admin`) is provisioned with a PostgreSQL/TimescaleDB datasource and 4 starter dashboards (Tactical Ops, BDA, Logistics & Supply, Tactical Heatmaps) under `grafana/`.
 
 ## Project Structure
 

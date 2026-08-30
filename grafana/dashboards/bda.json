@@ -1,0 +1,84 @@
+{
+  "id": null,
+  "uid": "apex-bda",
+  "title": "Apex - Battle Damage Assessment",
+  "description": "Per-unit casualties, loss %, severity, and friendly vs. enemy damage comparison. Queries assume BDA snapshots from server/analytics/engine.js#computeBDA are persisted to a `bda_units` table (unit_id, name, side, casualties, loss_percent, severity, status, generated_at).",
+  "tags": ["apex", "tactical", "bda"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Friendly Damage",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(casualties), 0) AS value FROM bda_units WHERE side = 'friendly' AND generated_at = (SELECT MAX(generated_at) FROM bda_units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Enemy Damage",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(casualties), 0) AS value FROM bda_units WHERE side = 'enemy' AND generated_at = (SELECT MAX(generated_at) FROM bda_units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Units Destroyed",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS value FROM bda_units WHERE status = 'destroyed' AND generated_at = (SELECT MAX(generated_at) FROM bda_units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Units Critical/Heavy Loss",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS value FROM bda_units WHERE severity IN ('critical', 'heavy') AND generated_at = (SELECT MAX(generated_at) FROM bda_units)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Per-Unit Battle Damage",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
+      "datasource": "Apex PostgreSQL",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT name AS \"Unit\", side AS \"Side\", casualties AS \"Casualties\", loss_percent AS \"Loss %\", severity AS \"Severity\", status AS \"Status\" FROM bda_units WHERE generated_at = (SELECT MAX(generated_at) FROM bda_units) ORDER BY loss_percent DESC",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
