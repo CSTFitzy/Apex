@@ -1,8 +1,20 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { verifyToken } from '../comms/auth.js';
 import { getCommsIo } from '../comms/gateway.js';
 
 const router = Router();
+
+// Signalling is chatty (one request per ICE candidate) but still needs a
+// ceiling so a peer cannot flood the relay.
+router.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    limit: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 
 /**
  * STUN/TURN configuration for NAT traversal. Public Google STUN servers are

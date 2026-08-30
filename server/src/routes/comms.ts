@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { issueToken, verifyToken, type CommsRole } from '../comms/auth.js';
 import { commsStore } from '../comms/store.js';
 import { getCommsIo } from '../comms/gateway.js';
@@ -6,6 +7,16 @@ import { evaluateChannelLink, evaluateLink } from '../comms/signal.js';
 import { keyStatus, rotateKeys } from '../comms/crypto.js';
 
 const router = Router();
+
+// Caps authentication attempts and channel/presence polling.
+router.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 
 const VALID_ROLES: CommsRole[] = ['COMMANDER', 'OFFICER', 'OPERATOR'];
 

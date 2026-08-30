@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { verifyToken, canSend } from '../comms/auth.js';
 import { commsStore } from '../comms/store.js';
 import { dispatchMessage, getCommsIo } from '../comms/gateway.js';
@@ -12,6 +13,18 @@ import {
 } from '../comms/types.js';
 
 const router = Router();
+
+// Protects the message API from abuse (scraping the log, spamming traffic).
+// Per-station quotas for outbound traffic are additionally enforced by
+// commsStore.checkRateLimit().
+router.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 
 function identityFrom(req: Request) {
   return verifyToken(req.header('authorization') || (req.body?.token as string | undefined));
