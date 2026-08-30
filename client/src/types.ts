@@ -217,6 +217,86 @@ export interface UnitPrediction {
   recommendations: string[];
 }
 
+export type SupplyType = 'Ammo' | 'Fuel' | 'Medical' | 'Rations' | 'Water';
+export type SupplyLineStatus = 'SECURE' | 'THREATENED' | 'CRITICAL' | 'CUT';
+
+export interface DepotInventory {
+  supplyType: SupplyType;
+  quantity: number;
+  maxQuantity: number;
+  priority: number;
+}
+
+export interface SupplyDepot {
+  id: number;
+  name: string;
+  location: LatLon;
+  totalCapacity: number;
+  securityLevel: number;
+  status: 'Operational' | 'Damaged' | 'Destroyed' | 'Captured';
+  inventory: DepotInventory[];
+}
+
+export interface ConvoyRoute {
+  id: string;
+  depotId: number;
+  depotName: string;
+  waypoints: LatLon[];
+  distanceM: number;
+  etaMinutes: number;
+  fuelCostLiters: number;
+  riskLevel: SupplyLineStatus;
+  progressPct: number;
+}
+
+export interface SupplyForecast {
+  unitId: string;
+  unitName: string;
+  generatedAt: string;
+  projections: Array<{
+    supplyType: SupplyType;
+    currentQuantity: number;
+    hourlyConsumption: number;
+    depletionHours: number | null;
+    projectedLevels: Array<{ hoursAhead: number; quantity: number }>;
+    warning: string | null;
+  }>;
+  logisticsHealthPct: number;
+}
+
+export interface AllocationResult {
+  allocations: Array<{
+    unitId: string;
+    unitName: string;
+    supplyType: SupplyType;
+    requestedQuantity: number;
+    allocatedQuantity: number;
+    priorityScore: number;
+    effectivenessPct: number;
+  }>;
+  unallocatedSupplies: Partial<Record<SupplyType, number>>;
+  transportUtilizationPct: number;
+}
+
+export interface ResupplyPlan {
+  requestId: string;
+  status: 'Pending' | 'Planned' | 'InTransit';
+  depot: SupplyDepot;
+  route: ConvoyRoute;
+  warnings: string[];
+}
+
+export interface DatabaseOptimizationStatus {
+  postgis: boolean;
+  timescaledb: boolean;
+  pgrouting: boolean;
+  pgStatStatements: boolean;
+  neo4jConfigured: boolean;
+  optimizedTables: string[];
+  indexes: string[];
+  cacheStrategy: Record<string, string>;
+}
+
 // ---------------------------------------------------------------------------
 // Tactical communications (WebRTC radio + real-time messaging)
 // ---------------------------------------------------------------------------

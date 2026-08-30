@@ -13,6 +13,9 @@ import weatherRouter from './routes/weather.js';
 import terrainRouter from './routes/terrain.js';
 import documentsRouter from './routes/documents.js';
 import enemyRouter from './routes/enemy.js';
+import createSupplyRouter from './routes/supply.js';
+import createDatabaseRouter from './routes/database.js';
+import { initializeOptimizedDatabase } from './services/databaseOptimization.js';
 import messagesRouter from './routes/messages.js';
 import commsRouter from './routes/comms.js';
 import webrtcRouter from './routes/webrtc.js';
@@ -68,6 +71,8 @@ app.use('/api/weather', weatherRouter);
 app.use('/api/terrain', terrainRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/enemy', enemyRouter);
+app.use('/api/supply', createSupplyRouter(pool, redisClient));
+app.use('/api/database', createDatabaseRouter(pool));
 app.use('/api/messages', messagesRouter);
 app.use('/api/comms', commsRouter);
 app.use('/api/webrtc', webrtcRouter);
@@ -144,6 +149,7 @@ async function initializeDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await initializeOptimizedDatabase(pool);
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);

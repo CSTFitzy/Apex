@@ -7,6 +7,7 @@ import DocumentsPanel from './components/DocumentsPanel'
 import EnemyPanel from './components/EnemyPanel'
 import SimulationPanel from './components/SimulationPanel'
 import PredictionPanel from './components/PredictionPanel'
+import LogisticsPanel from './components/LogisticsPanel'
 import CommunicationsPanel from './components/comms/CommunicationsPanel'
 import Cesium3DView from './components/Cesium3DView'
 import api from './api/client'
@@ -30,7 +31,7 @@ import type {
 } from './types'
 import './App.css'
 
-type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions' | 'comms'
+type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions' | 'logistics' | 'comms'
 
 /** Observer eye height above ground level used by the LOS visibility tool. */
 const OBSERVER_HEIGHT_M = 1.5
@@ -186,6 +187,9 @@ function App() {
           <button className={`nav-btn ${activeTab === 'predictions' ? 'active' : ''}`} onClick={() => setActiveTab('predictions')}>
             AI Predictions
           </button>
+          <button className={`nav-btn ${activeTab === 'logistics' ? 'active' : ''}`} onClick={() => setActiveTab('logistics')}>
+            Logistics
+          </button>
           <button className={`nav-btn ${activeTab === 'comms' ? 'active' : ''}`} onClick={() => setActiveTab('comms')}>
             Comms
           </button>
@@ -288,6 +292,7 @@ function App() {
               error={predictionsError}
             />
           )}
+          {activeTab === 'logistics' && <LogisticsPanel units={units} />}
         </aside>
       </div>
     </div>
