@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api, { getCurrentUser } from '../../utils/api.js';
-import SharknetSocket from '../../utils/websocket.js';
+import ApexSocket from '../../utils/websocket.js';
 import CallManager, { CALL_STATE } from '../../utils/callManager.js';
 import VoiceCallPanel from './VoiceCallPanel.jsx';
 
@@ -55,8 +55,8 @@ export default function CommunicationsPanel() {
 
   // Establish the WebSocket connection + WebRTC call manager once.
   useEffect(() => {
-    const token = localStorage.getItem('sharknet_token');
-    const socket = new SharknetSocket();
+    const token = localStorage.getItem('apex_token');
+    const socket = new ApexSocket();
     socket.connect(token);
     socket.subscribe(['comms']);
     socketRef.current = socket;

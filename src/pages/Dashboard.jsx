@@ -12,7 +12,8 @@ import LogisticsMap from '../components/LogisticsMap.jsx';
 import AARPanel from '../components/AARPanel.jsx';
 import useSupplyData from '../hooks/useSupplyData.js';
 import api, { setToken } from '../utils/api.js';
-import SharknetSocket from '../utils/websocket.js';
+import ApexSocket from '../utils/websocket.js';
+import { AUTH_DISABLED } from '../utils/auth.js';
 
 const SIDEBAR_TABS = [
   { id: 'intel', label: 'Intel' },
@@ -51,8 +52,8 @@ export default function Dashboard({ onLogout }) {
   }, []);
 
   useEffect(() => {
-    const socket = new SharknetSocket();
-    const token = localStorage.getItem('sharknet_token');
+    const socket = new ApexSocket();
+    const token = localStorage.getItem('apex_token');
     socket.connect(token);
     socket.subscribe(['map', 'weather', 'intelligence']);
 
@@ -84,7 +85,7 @@ export default function Dashboard({ onLogout }) {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>Sharknet</h1>
+        <h1>Apex</h1>
         <nav className="dashboard-tabs">
           <button
             type="button"
@@ -108,7 +109,7 @@ export default function Dashboard({ onLogout }) {
             After-Action Review
           </button>
         </nav>
-        <button onClick={handleLogout}>Log out</button>
+        {!AUTH_DISABLED && <button onClick={handleLogout}>Log out</button>}
       </header>
 
       <div className={activeTab === 'overview' ? 'dashboard-grid' : 'tab-hidden'}>

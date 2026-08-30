@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Vite configuration for the Sharknet React frontend.
+// Vite configuration for the Apex React frontend.
 export default defineConfig({
   plugins: [react()],
   server: {

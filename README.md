@@ -1,4 +1,4 @@
-# Sharknet
+# Apex
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
@@ -28,8 +28,8 @@ Open-source tactical management system utilizing ODIN, military intelligence dat
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/CSTFitzy/sharknet.git
-   cd sharknet
+   git clone https://github.com/CSTFitzy/Apex.git
+   cd Apex
    ```
 
 2. **Setup environment**
@@ -46,6 +46,22 @@ Open-source tactical management system utilizing ODIN, military intelligence dat
 4. **Access the application**
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:3000/api
+
+### Running without a database or login
+
+Apex bypasses authentication outside of production, so you can start it with
+just Node.js installed:
+
+```bash
+npm install
+npm run server   # backend on port 3000
+npm run dev      # frontend on port 5173 (separate terminal)
+```
+
+The dev server opens straight into the dashboard - no login screen and no
+PostgreSQL required (user accounts fall back to in-memory storage). To enforce
+login again, set `DISABLE_AUTH=false` for the backend and
+`VITE_REQUIRE_AUTH=true` for the frontend.
 
 ## Architecture
 

@@ -3,10 +3,10 @@
  *
  * Wraps a single `RTCPeerConnection` and drives call signaling (offer /
  * answer / ICE candidate exchange / hangup) over an existing
- * `SharknetSocket` connection. Emits high-level events
+ * `ApexSocket` connection. Emits high-level events
  * ('incomingCall', 'stateChange', 'remoteStream', 'ended', 'error') that
  * UI components can subscribe to, mirroring the pub/sub style of
- * `SharknetSocket`.
+ * `ApexSocket`.
  */
 
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
@@ -21,7 +21,7 @@ export const CALL_STATE = {
 };
 
 export class CallManager {
-  /** @param {import('./websocket.js').SharknetSocket} socket - an already-connected, authenticated socket */
+  /** @param {import('./websocket.js').ApexSocket} socket - an already-connected, authenticated socket */
   constructor(socket) {
     this.socket = socket;
     this.peerConnection = null;

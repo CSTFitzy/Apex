@@ -40,7 +40,7 @@ export default function Login({ onLogin }) {
   return (
     <div className="auth-page">
       <form className="auth-form" onSubmit={handleSubmit}>
-        <h1>Sharknet</h1>
+        <h1>Apex</h1>
         <p className="auth-subtitle">Tactical Management System</p>
 
         {mode === 'register' && (

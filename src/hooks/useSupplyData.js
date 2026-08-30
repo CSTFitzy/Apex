@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '../utils/api.js';
-import SharknetSocket from '../utils/websocket.js';
+import ApexSocket from '../utils/websocket.js';
 
 const POLL_INTERVAL_MS = 30000;
 const REFRESH_DEBOUNCE_MS = 400;
@@ -58,8 +58,8 @@ export default function useSupplyData({ windowHours } = {}) {
 
   // Real-time updates: coalesce bursts of supply events into a single refresh.
   useEffect(() => {
-    const socket = new SharknetSocket();
-    socket.connect(localStorage.getItem('sharknet_token'));
+    const socket = new ApexSocket();
+    socket.connect(localStorage.getItem('apex_token'));
     socket.subscribe(['supply']);
 
     let timer = null;
