@@ -15,6 +15,7 @@ export const MESSAGE_TYPES = {
   MAP_UPDATE: 'MAP_UPDATE',
   WEATHER_ALERT: 'WEATHER_ALERT',
   INTELLIGENCE_UPDATE: 'INTELLIGENCE_UPDATE',
+  ANALYTICS_EVENT: 'ANALYTICS_EVENT',
   SUBSCRIBE: 'SUBSCRIBE',
   ERROR: 'ERROR',
   // Real-time messaging
@@ -300,6 +301,11 @@ export function broadcastWeatherAlert(wss, data) {
 /** Broadcast an intelligence update (new ODIN report, etc). */
 export function broadcastIntelligenceUpdate(wss, data) {
   broadcast(wss, MESSAGE_TYPES.INTELLIGENCE_UPDATE, data, 'intelligence');
+}
+
+/** Broadcast a tactical analytics event (casualty report, enemy contact, etc). */
+export function broadcastAnalyticsEvent(wss, data) {
+  broadcast(wss, MESSAGE_TYPES.ANALYTICS_EVENT, data, 'analytics');
 }
 
 /** Broadcast a chat message to clients subscribed to the 'comms' topic. */
