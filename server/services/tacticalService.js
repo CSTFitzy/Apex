@@ -16,6 +16,7 @@ export const READINESS = ['full', 'degraded', 'combat ineffective'];
 const units = new Map();
 const markupVersions = new Map();
 const documents = new Map();
+const scenarios = new Map();
 
 function nowIso() {
   return new Date().toISOString();
@@ -212,6 +213,18 @@ export function listDocuments(scenarioId = 'default') {
     }));
 }
 
+export function listDocumentsForAnalysis(scenarioId = 'default') {
+  const normalized = normalizeScenarioId(scenarioId);
+  return [...documents.values()]
+    .filter((doc) => doc.scenarioId === normalized)
+    .map((doc) => ({
+      id: doc.id,
+      filename: doc.filename,
+      text: doc.extractedText || buildPreview('', doc.fileType).text,
+      tags: doc.tags,
+    }));
+}
+
 export function getDocumentPreview(id) {
   const document = documents.get(String(id));
   if (!document) return null;
@@ -254,8 +267,42 @@ export function removeDocument(id) {
   return documents.delete(String(id));
 }
 
+export function saveScenario(payload) {
+  const timestamp = nowIso();
+  const id = normalizeScenarioId(payload.id || payload.scenarioId || uuidv4());
+  const existing = scenarios.get(id);
+  const scenario = {
+    id,
+    name: String(payload.name || existing?.name || `Scenario ${id}`),
+    aoo: payload.aoo || existing?.aoo || null,
+    aooRadiusKm: Number.isFinite(Number(payload.aooRadiusKm)) ? Number(payload.aooRadiusKm) : existing?.aooRadiusKm || 5,
+    units: Array.isArray(payload.units) ? payload.units : listUnits(id),
+    markups: Array.isArray(payload.markups) ? payload.markups : listMarkupSets(id)[0]?.markups || [],
+    layers: Array.isArray(payload.layers) ? payload.layers : listMarkupSets(id)[0]?.layers || [],
+    documents: Array.isArray(payload.documents) ? payload.documents : listDocuments(id),
+    coas: Array.isArray(payload.coas) ? payload.coas : existing?.coas || [],
+    selectedCOAId: payload.selectedCOAId || existing?.selectedCOAId || null,
+    counterPlan: payload.counterPlan || existing?.counterPlan || null,
+    opord: payload.opord || existing?.opord || null,
+    casualtyEstimate: payload.casualtyEstimate || existing?.casualtyEstimate || null,
+    logisticsEstimate: payload.logisticsEstimate || existing?.logisticsEstimate || null,
+    riskAssessment: payload.riskAssessment || existing?.riskAssessment || null,
+    createdAt: existing?.createdAt || timestamp,
+    updatedAt: timestamp,
+  };
+  scenarios.set(id, scenario);
+  return scenario;
+}
+
+export function getScenario(id) {
+  const scenario = scenarios.get(normalizeScenarioId(id));
+  if (!scenario) return null;
+  return scenario;
+}
+
 export function resetTacticalStore() {
   units.clear();
   markupVersions.clear();
   documents.clear();
+  scenarios.clear();
 }

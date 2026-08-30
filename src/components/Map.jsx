@@ -43,6 +43,7 @@ export default function Map({
   onCreateMarkup,
   onDraftChange,
   finishDrawingSignal = 0,
+  coaOverlays = [],
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -51,6 +52,7 @@ export default function Map({
   const markupLayersRef = useRef([]);
   const heatLayerRef = useRef(null);
   const aooLayerRef = useRef(null);
+  const coaLayersRef = useRef([]);
   const onSelectRef = useRef(onSelect);
   const tacticalHandlersRef = useRef({ activeTool, activeLayerId, markupStyle, onUnitPlace, onCreateMarkup });
   const draftRef = useRef([]);
@@ -292,6 +294,56 @@ export default function Map({
       })
       .filter(Boolean);
   }, [layers, markups]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    coaLayersRef.current.forEach((layer) => layer.remove());
+    coaLayersRef.current = coaOverlays
+      .filter((coa) => coa.visible !== false)
+      .flatMap((coa) => {
+        const color = coa.visualization?.color || '#f85149';
+        const layersToAdd = [];
+
+        (coa.visualization?.paths || []).forEach((path) => {
+          const points = (path.points || [])
+            .filter((point) => Number.isFinite(Number(point?.latitude)) && Number.isFinite(Number(point?.longitude)))
+            .map((point) => [point.latitude, point.longitude]);
+          if (points.length > 1) {
+            const line = L.polyline(points, { color: path.color || color, weight: 4, dashArray: '8 6' }).addTo(mapRef.current);
+            line.bindTooltip(`${coa.name || coa.title}: ${path.unitName || 'enemy movement'}`);
+            layersToAdd.push(line);
+          }
+        });
+
+        (coa.visualization?.phaseLines || []).forEach((phaseLine) => {
+          const points = (phaseLine.points || [])
+            .filter((point) => Number.isFinite(Number(point?.latitude)) && Number.isFinite(Number(point?.longitude)))
+            .map((point) => [point.latitude, point.longitude]);
+          if (points.length > 1) {
+            const line = L.polyline(points, { color, weight: 2, opacity: 0.8 }).addTo(mapRef.current);
+            line.bindTooltip(phaseLine.label || 'Phase line');
+            layersToAdd.push(line);
+          }
+        });
+
+        (coa.visualization?.objectives || []).forEach((objective) => {
+          const position = objective.position;
+          if (Number.isFinite(Number(position?.latitude)) && Number.isFinite(Number(position?.longitude))) {
+            const marker = L.circleMarker([position.latitude, position.longitude], {
+              radius: 8,
+              color,
+              fillColor: color,
+              fillOpacity: 0.75,
+            }).addTo(mapRef.current);
+            marker.bindTooltip(objective.label || 'Objective');
+            layersToAdd.push(marker);
+          }
+        });
+
+        return layersToAdd;
+      });
+  }, [coaOverlays]);
 
   // Render/update the active tactical heatmap overlay, if any.
   useEffect(() => {

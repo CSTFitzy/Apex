@@ -15,6 +15,7 @@ import UnitSymbols from '../components/UnitSymbols.jsx';
 import UnitsPanel from '../components/UnitsPanel.jsx';
 import MarkupTools, { DEFAULT_LAYERS } from '../components/MarkupTools.jsx';
 import DocumentUpload from '../components/DocumentUpload.jsx';
+import COAAnalysisPanel from '../components/COAAnalysisPanel.jsx';
 import useSupplyData from '../hooks/useSupplyData.js';
 import api, { setToken } from '../utils/api.js';
 import ApexSocket from '../utils/websocket.js';
@@ -26,6 +27,7 @@ const SIDEBAR_TABS = [
   { id: 'simulation', label: 'Simulation' },
   { id: 'analytics', label: 'Analytics' },
   { id: 'supply', label: 'Supply' },
+  { id: 'coas', label: 'COAs' },
 ];
 
 /**
@@ -52,6 +54,12 @@ export default function Dashboard({ onLogout }) {
   const [draftPointCount, setDraftPointCount] = useState(0);
   const [finishDrawingSignal, setFinishDrawingSignal] = useState(0);
   const [tacticalStatus, setTacticalStatus] = useState('');
+  const [documents, setDocuments] = useState([]);
+  const [coas, setCoas] = useState([]);
+  const [selectedCOAId, setSelectedCOAId] = useState(null);
+  const [counterPlan, setCounterPlan] = useState(null);
+  const [opord, setOpord] = useState(null);
+  const [coaOverlays, setCoaOverlays] = useState([]);
   const supply = useSupplyData();
   const scenarioId = selected
     ? `aoo-${selected.latitude.toFixed(4)}-${selected.longitude.toFixed(4)}`
@@ -86,6 +94,19 @@ export default function Dashboard({ onLogout }) {
           setLayers(DEFAULT_LAYERS);
           setMarkups([]);
         }
+      })
+      .catch((err) => setTacticalStatus(err.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [scenarioId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getTacticalDocuments(scenarioId)
+      .then((data) => {
+        if (!cancelled) setDocuments(data.documents || []);
       })
       .catch((err) => setTacticalStatus(err.message));
     return () => {
@@ -271,6 +292,7 @@ export default function Dashboard({ onLogout }) {
             units={units}
             markups={markups}
             layers={layers}
+            coaOverlays={coaOverlays}
             activeTool={activeTool}
             activeLayerId={activeLayerId}
             markupStyle={markupStyle}
@@ -348,6 +370,23 @@ export default function Dashboard({ onLogout }) {
               onRefresh={supply.refresh}
             />
           </div>
+
+          <div className={sidebarTab === 'coas' ? '' : 'tab-hidden'}>
+            <COAAnalysisPanel
+              scenarioId={scenarioId}
+              units={units}
+              documents={documents}
+              coas={coas}
+              selectedCOAId={selectedCOAId}
+              counterPlan={counterPlan}
+              opord={opord}
+              onCoasChange={setCoas}
+              onSelectedCOAChange={setSelectedCOAId}
+              onCounterPlanChange={setCounterPlan}
+              onOpordChange={setOpord}
+              onOverlayChange={setCoaOverlays}
+            />
+          </div>
         </aside>
 
         <section className="dashboard-analysis">
@@ -368,7 +407,7 @@ export default function Dashboard({ onLogout }) {
         </section>
 
         <section className="dashboard-documents">
-          <DocumentUpload scenarioId={scenarioId} />
+          <DocumentUpload scenarioId={scenarioId} onDocumentsChange={setDocuments} />
         </section>
       </div>
 

@@ -137,6 +137,7 @@ label {
 .analysis-chart,
 .simulation-panel,
 .analytics-panel,
+.coa-panel,
 .unit-symbol-picker,
 .units-panel,
 .markup-tools,
@@ -640,6 +641,126 @@ label {
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--color-text);
+}
+
+.coa-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coa-panel-header,
+.coa-card header,
+.coa-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.coa-panel-header {
+  justify-content: space-between;
+}
+
+.coa-panel h3,
+.coa-panel h4 {
+  margin: 0;
+}
+
+.coa-panel small,
+.coa-status,
+.coa-summary {
+  color: var(--color-muted);
+}
+
+.coa-card-grid,
+.counter-plan {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.coa-card,
+.counter-unit-card,
+.coa-estimates,
+.opord-preview {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.coa-card-selected {
+  border-color: var(--color-accent);
+}
+
+.coa-select-button {
+  width: 100%;
+  display: grid;
+  gap: 0.25rem;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.coa-toggle {
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.coa-toggle input {
+  width: auto;
+}
+
+.coa-badge {
+  background: var(--color-success);
+  color: #0b0f14;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.coa-comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.coa-comparison th,
+.coa-comparison td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.35rem;
+  text-align: left;
+}
+
+.counter-unit-card ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.risk-high {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.risk-medium {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.risk-low {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.opord-preview pre {
+  white-space: pre-wrap;
+  color: var(--color-text);
+  max-height: 320px;
+  overflow: auto;
 }
 
 .markup-text-label span {

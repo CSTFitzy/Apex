@@ -7,7 +7,7 @@ function formatBytes(bytes = 0) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function DocumentUpload({ scenarioId = 'default' }) {
+export default function DocumentUpload({ scenarioId = 'default', onDocumentsChange }) {
   const [documents, setDocuments] = useState([]);
   const [selected, setSelected] = useState(null);
   const [query, setQuery] = useState('');
@@ -16,7 +16,9 @@ export default function DocumentUpload({ scenarioId = 'default' }) {
 
   async function loadDocuments() {
     const data = await api.getTacticalDocuments(scenarioId);
-    setDocuments(data.documents || []);
+    const nextDocuments = data.documents || [];
+    setDocuments(nextDocuments);
+    onDocumentsChange?.(nextDocuments);
   }
 
   useEffect(() => {
