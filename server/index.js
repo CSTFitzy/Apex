@@ -1,5 +1,5 @@
 /**
- * Sharknet backend entry point.
+ * Apex backend entry point.
  *
  * Boots an Express HTTP API alongside a `ws` WebSocket server, sets up
  * PostgreSQL and Redis connections, and wires up authentication, error
@@ -165,7 +165,7 @@ async function start() {
   }
 
   server.listen(PORT, () => {
-    logger.info(`Sharknet server listening on port ${PORT}`);
+    logger.info(`Apex server listening on port ${PORT}`);
   });
 }
 

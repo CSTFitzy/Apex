@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../utils/api.js';
-import SharknetSocket from '../utils/websocket.js';
+import ApexSocket from '../utils/websocket.js';
 
 const REFRESH_INTERVAL_MS = 4000;
 
@@ -47,8 +47,8 @@ export default function AnalyticsPanel({ units = [], events = [], onHeatmapChang
 
   // Live event stream: append ANALYTICS_EVENT broadcasts as they arrive.
   useEffect(() => {
-    const socket = new SharknetSocket();
-    const token = localStorage.getItem('sharknet_token');
+    const socket = new ApexSocket();
+    const token = localStorage.getItem('apex_token');
     socket.connect(token);
     socket.subscribe(['analytics']);
 

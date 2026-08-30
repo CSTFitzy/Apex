@@ -8,6 +8,7 @@
  * specific users.
  */
 import { verifyToken } from '../auth/jwt.js';
+import { isAuthDisabled, getDevUser } from '../auth/middleware.js';
 import { logger } from '../utils/logger.js';
 import { Messages } from '../comms/store.js';
 
@@ -107,7 +108,9 @@ export function registerWebSocketHandlers(wss) {
  * Attempt to authenticate a socket connection using a `token` query param.
  * Unauthenticated sockets are still allowed to connect (read-only) so
  * public dashboards can display non-sensitive data, but `socket.user`
- * will be undefined.
+ * will be undefined. When authentication is disabled (see
+ * `isAuthDisabled`), tokenless sockets are given the dev user so
+ * messaging/presence still work locally.
  */
 function authenticateSocket(socket, request) {
   try {
@@ -118,6 +121,10 @@ function authenticateSocket(socket, request) {
     }
   } catch (err) {
     logger.warn('WebSocket authentication failed', { error: err.message });
+  }
+
+  if (!socket.user && isAuthDisabled()) {
+    socket.user = getDevUser();
   }
 }
 

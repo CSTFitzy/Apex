@@ -1,5 +1,5 @@
 /**
- * Database models / schemas for Sharknet.
+ * Database models / schemas for Apex.
  *
  * Each model exposes:
  *  - a `TABLE` SQL definition (used by `initSchema` to create tables if missing)

@@ -1,5 +1,5 @@
 /**
- * WebSocket client handler for real-time updates from the Sharknet backend.
+ * WebSocket client handler for real-time updates from the Apex backend.
  * Manages connection lifecycle, automatic reconnection, and a simple
  * pub/sub API for consuming MAP_UPDATE / WEATHER_ALERT / INTELLIGENCE_UPDATE
  * messages broadcast by the server.
@@ -7,7 +7,7 @@
 
 const RECONNECT_DELAY_MS = 3000;
 
-export class SharknetSocket {
+export class ApexSocket {
   constructor(url = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:3000/ws`) {
     this.url = url;
     this.socket = null;
@@ -70,4 +70,4 @@ export class SharknetSocket {
   }
 }
 
-export default SharknetSocket;
+export default ApexSocket;

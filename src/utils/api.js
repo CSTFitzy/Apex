@@ -1,5 +1,5 @@
 /**
- * Frontend API client for communicating with the Sharknet backend.
+ * Frontend API client for communicating with the Apex backend.
  * Wraps `fetch` with base URL handling, JSON parsing, and JWT auth headers.
  */
 
@@ -7,15 +7,15 @@ const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 /** Get the stored auth token, if any. */
 function getToken() {
-  return localStorage.getItem('sharknet_token');
+  return localStorage.getItem('apex_token');
 }
 
 /** Persist the auth token (or clear it if null). */
 export function setToken(token) {
   if (token) {
-    localStorage.setItem('sharknet_token', token);
+    localStorage.setItem('apex_token', token);
   } else {
-    localStorage.removeItem('sharknet_token');
+    localStorage.removeItem('apex_token');
   }
 }
 
