@@ -36,7 +36,9 @@ button.link-button {
   margin-top: 0.5rem;
 }
 
-input {
+input,
+select,
+textarea {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-text);
@@ -103,6 +105,9 @@ label {
 
 .dashboard-map {
   grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .tactical-map {
@@ -111,6 +116,13 @@ label {
   min-height: 400px;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.tactical-status,
+.document-status {
+  color: var(--color-muted);
+  margin: 0;
+  font-size: 0.85rem;
 }
 
 .dashboard-sidebar {
@@ -124,7 +136,11 @@ label {
 .intelligence-panel,
 .analysis-chart,
 .simulation-panel,
-.analytics-panel {
+.analytics-panel,
+.unit-symbol-picker,
+.units-panel,
+.markup-tools,
+.document-upload-panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -436,6 +452,204 @@ label {
 
 .dashboard-logistics {
   grid-column: 1 / -1;
+}
+
+.dashboard-documents {
+  grid-column: 1 / -1;
+}
+
+.tactical-form-row,
+.markup-toolbar,
+.unit-symbol-picker header,
+.units-panel header,
+.markup-tools header,
+.document-upload-panel header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.unit-symbol-picker header,
+.units-panel header,
+.markup-tools header,
+.document-upload-panel header {
+  justify-content: space-between;
+}
+
+.unit-symbol-picker h3,
+.units-panel h3,
+.markup-tools h3,
+.document-upload-panel h2 {
+  margin: 0;
+}
+
+.unit-symbol-picker select,
+.unit-symbol-picker input,
+.units-panel select,
+.units-panel input,
+.markup-tools select,
+.markup-tools input,
+.document-upload-panel input {
+  width: 100%;
+}
+
+.tool-active {
+  background: var(--color-accent) !important;
+  color: #fff !important;
+}
+
+.danger-button {
+  background: var(--color-danger);
+}
+
+.unit-list,
+.layer-list,
+.document-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.unit-list-item,
+.document-list li,
+.layer-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.unit-list-item > button:first-child,
+.document-list li > button:first-child {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: left;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.unit-list-item small,
+.document-list small {
+  display: block;
+  color: var(--color-muted);
+}
+
+.unit-friendly {
+  border-left: 3px solid #2f81f7;
+}
+
+.unit-enemy {
+  border-left: 3px solid #f85149;
+}
+
+.unit-neutral {
+  border-left: 3px solid #3fb950;
+}
+
+.unit-info-panel {
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.supply-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.unit-map-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unit-map-icon.unit-selected {
+  filter: drop-shadow(0 0 6px #f2cc60);
+}
+
+.unit-symbol-svg svg {
+  display: block;
+}
+
+.unit-symbol-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 0.25rem;
+  border: 2px solid currentColor;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.unit-symbol-fallback.unit-friendly {
+  color: #2f81f7;
+}
+
+.unit-symbol-fallback.unit-enemy {
+  color: #f85149;
+}
+
+.unit-symbol-fallback.unit-neutral {
+  color: #3fb950;
+}
+
+.markup-tools details {
+  margin-top: 0.75rem;
+}
+
+.layer-list input[type='checkbox'] {
+  width: auto;
+}
+
+.layer-add {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.document-dropzone {
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.document-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1rem;
+}
+
+.document-preview {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.document-preview pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-text);
+}
+
+.markup-text-label span {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #0b0f14;
+  background: #f2cc60;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .supply-panel {
