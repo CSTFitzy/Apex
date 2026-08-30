@@ -23,6 +23,7 @@ import type {
   LosObserver,
   SpotHeight,
   TacticalUnit,
+  UnitPrediction,
   ViewshedResult,
 } from '../types';
 import {
@@ -45,6 +46,7 @@ L.Icon.Default.mergeOptions({
 const AO_COLOR = '#3b82f6';
 const VISIBLE_COLOR = '#00ff88';
 const BLOCKED_COLOR = '#ff4444';
+const PREDICTION_COLOR = '#9b59b6';
 /** Minimum interval (ms) between live radius updates while dragging a LOS circle. */
 const DRAG_THROTTLE_MS = 80;
 
@@ -62,6 +64,8 @@ interface Props {
   onMapClick: (point: LatLon) => void;
   units: TacticalUnit[];
   viewshed: ViewshedResult | null;
+  /** AI-forecast future positions for hostile units, rendered as confidence halos. */
+  predictions?: UnitPrediction[];
 }
 
 function unitIcon(unit: TacticalUnit): L.DivIcon {
@@ -325,6 +329,7 @@ export default function TacticalMap({
   onMapClick,
   units,
   viewshed,
+  predictions = [],
 }: Props) {
   const handleAOComplete = (nextAO: AreaOfOperations) => {
     onAOChange(nextAO);
@@ -461,6 +466,35 @@ export default function TacticalMap({
           </Popup>
         </Marker>
       ))}
+
+      {predictions.map((prediction) =>
+        prediction.trajectory.points.map((pt) => (
+          <Fragment key={`predicted-${prediction.unitId}-${pt.minutesAhead}`}>
+            <Circle
+              center={[pt.position.lat, pt.position.lon]}
+              // Lower-confidence predictions get a larger, hazier halo.
+              radius={Math.max(150, (100 - pt.confidencePct) * 60)}
+              pathOptions={{
+                color: PREDICTION_COLOR,
+                weight: 1,
+                dashArray: '4 4',
+                fillColor: PREDICTION_COLOR,
+                fillOpacity: 0.12,
+                interactive: false,
+              }}
+            />
+            <CircleMarker
+              center={[pt.position.lat, pt.position.lon]}
+              radius={4}
+              pathOptions={{ color: PREDICTION_COLOR, fillColor: PREDICTION_COLOR, fillOpacity: 0.9 }}
+            >
+              <Tooltip>
+                {`${prediction.unitName} - predicted +${pt.minutesAhead} min (${pt.confidencePct}% confidence)`}
+              </Tooltip>
+            </CircleMarker>
+          </Fragment>
+        ))
+      )}
     </MapContainer>
   );
 }

@@ -456,6 +456,12 @@
   padding: 20px;
 }
 
+/* Keeps a panel mounted (so background logic like the simulation tick loop
+   keeps running) while hiding it from view when its tab isn't active. */
+.tab-hidden {
+  display: none;
+}
+
 .side-panel h2 {
   font-size: 18px;
   color: #00b4d8;
@@ -798,4 +804,97 @@
 
 .blocked-count {
   color: #ff6b6b;
+}
+
+/* ==== AI Prediction panel ==== */
+.prediction-card {
+  border-left: 4px solid #9b59b6;
+}
+
+.prediction-block {
+  margin-top: 8px;
+}
+
+.prediction-block strong {
+  color: #90caf9;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.confidence-badge {
+  color: #9b59b6;
+  font-weight: 600;
+}
+
+/* ==== 2D/3D view toggle ==== */
+.view-toggle-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  background-color: rgba(15, 20, 35, 0.94);
+  border: 1px solid #00b4d8;
+  border-radius: 6px;
+  color: #d7e3f4;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.view-toggle-btn:hover {
+  background-color: #1a2940;
+}
+
+/* ==== Cesium 3D globe view ==== */
+.cesium-view-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.cesium-container {
+  height: 100%;
+  width: 100%;
+}
+
+.cesium-controls-panel {
+  position: absolute;
+  z-index: 1000;
+  top: 12px;
+  left: 12px;
+  width: 230px;
+  background-color: rgba(15, 20, 35, 0.94);
+  border: 1px solid #00b4d8;
+  border-radius: 6px;
+  padding: 12px;
+  color: #d7e3f4;
+  font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.cesium-controls-panel h3 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: #00b4d8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cesium-controls-panel select {
+  width: 100%;
+  margin-top: 8px;
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.night-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
 }

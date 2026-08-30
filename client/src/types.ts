@@ -179,3 +179,40 @@ export interface SimulationEvent {
   timestamp: number;
   message: string;
 }
+
+/** A single predicted future position for a unit, produced by the LSTM movement model. */
+export interface PredictedPosition {
+  position: LatLon;
+  minutesAhead: number;
+  confidencePct: number;
+}
+
+/** Multi-step-ahead movement forecast for one unit. */
+export interface TrajectoryPrediction {
+  unitId: string;
+  unitName: string;
+  points: PredictedPosition[];
+}
+
+export type ThreatTrend = 'INCREASING' | 'DECREASING' | 'STABLE';
+
+/** Forecast of how a unit's threat level is expected to change over time. */
+export interface ThreatForecast {
+  unitId: string;
+  unitName: string;
+  hoursAhead: number;
+  trend: ThreatTrend;
+  confidencePct: number;
+  predictedLevel: ThreatAssessment['level'];
+}
+
+/** Combined AI prediction bundle for one hostile unit. */
+export interface UnitPrediction {
+  unitId: string;
+  unitName: string;
+  trajectory: TrajectoryPrediction;
+  threatForecasts: ThreatForecast[];
+  casualtyForecastPct: number;
+  engagementProbabilityPct: number;
+  recommendations: string[];
+}

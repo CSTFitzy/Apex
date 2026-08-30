@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.6.0",
+    "cesium": "^1.144.0",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
     "milsymbol": "^3.0.4",
@@ -19,6 +21,7 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.16.0",
     "socket.io-client": "^4.7.2",
+    "vite-plugin-cesium": "^1.2.23",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
