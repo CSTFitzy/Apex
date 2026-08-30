@@ -62,6 +62,51 @@ function handleDocumentUpload(req, res, next) {
   });
 }
 
+router.post('/analyze-enemy-coas', aiPlanningLimiter, requireAuth, async (req, res) => {
+  const scenarioId = req.body.scenarioId || 'default';
+  const unitsForScenario = listUnits(scenarioId);
+  const documents = Array.isArray(req.body.documents) && req.body.documents.length
+    ? req.body.documents
+    : listDocumentsForAnalysis(scenarioId);
+  const enemyUnits = Array.isArray(req.body.enemyUnits) && req.body.enemyUnits.length
+    ? req.body.enemyUnits
+    : unitsForScenario.filter((unit) => unit.affiliation === 'enemy');
+  const friendlyUnits = Array.isArray(req.body.friendlyUnits) && req.body.friendlyUnits.length
+    ? req.body.friendlyUnits
+    : unitsForScenario.filter((unit) => unit.affiliation === 'friendly');
+  try {
+    return res.status(201).json(await analyzeEnemyCoas({
+      documents, enemyUnits, friendlyUnits, terrain: req.body.terrain, weather: req.body.weather,
+    }));
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/recommend-counter-moves', aiPlanningLimiter, requireAuth, async (req, res) => {
+  const unitsForScenario = listUnits(req.body.scenarioId || 'default');
+  try {
+    return res.status(201).json(await recommendCounterMoves({
+      selectedCOA: req.body.selectedCOA,
+      friendlyUnits: Array.isArray(req.body.friendlyUnits) && req.body.friendlyUnits.length
+        ? req.body.friendlyUnits : unitsForScenario.filter((unit) => unit.affiliation === 'friendly'),
+      enemyUnits: Array.isArray(req.body.enemyUnits) && req.body.enemyUnits.length
+        ? req.body.enemyUnits : unitsForScenario.filter((unit) => unit.affiliation === 'enemy'),
+      terrain: req.body.terrain,
+    }));
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/generate-opord', aiPlanningLimiter, requireAuth, async (req, res) => {
+  try {
+    return res.status(201).json(await generateOpord(req.body));
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
 /**
  * GET /api/tactical/locations
  * List all tracked tactical locations/targets.
@@ -169,61 +214,6 @@ router.post('/analysis', requireAuth, async (req, res) => {
       parameters: req.body.parameters,
     });
 
-    router.post('/analyze-enemy-coas', aiPlanningLimiter, requireAuth, async (req, res) => {
-      const scenarioId = req.body.scenarioId || 'default';
-      const unitsForScenario = listUnits(scenarioId);
-      const documents = Array.isArray(req.body.documents) && req.body.documents.length
-        ? req.body.documents
-        : listDocumentsForAnalysis(scenarioId);
-      const enemyUnits = Array.isArray(req.body.enemyUnits) && req.body.enemyUnits.length
-        ? req.body.enemyUnits
-        : unitsForScenario.filter((unit) => unit.affiliation === 'enemy');
-      const friendlyUnits = Array.isArray(req.body.friendlyUnits) && req.body.friendlyUnits.length
-        ? req.body.friendlyUnits
-        : unitsForScenario.filter((unit) => unit.affiliation === 'friendly');
-
-      try {
-        const result = await analyzeEnemyCoas({
-          documents,
-          enemyUnits,
-          friendlyUnits,
-          terrain: req.body.terrain,
-          weather: req.body.weather,
-        });
-        return res.status(201).json(result);
-      } catch (err) {
-        return res.status(400).json({ error: err.message });
-      }
-    });
-
-    router.post('/recommend-counter-moves', aiPlanningLimiter, requireAuth, async (req, res) => {
-      const scenarioId = req.body.scenarioId || 'default';
-      const unitsForScenario = listUnits(scenarioId);
-      try {
-        const result = await recommendCounterMoves({
-          selectedCOA: req.body.selectedCOA,
-          friendlyUnits: Array.isArray(req.body.friendlyUnits) && req.body.friendlyUnits.length
-            ? req.body.friendlyUnits
-            : unitsForScenario.filter((unit) => unit.affiliation === 'friendly'),
-          enemyUnits: Array.isArray(req.body.enemyUnits) && req.body.enemyUnits.length
-            ? req.body.enemyUnits
-            : unitsForScenario.filter((unit) => unit.affiliation === 'enemy'),
-          terrain: req.body.terrain,
-        });
-        return res.status(201).json(result);
-      } catch (err) {
-        return res.status(400).json({ error: err.message });
-      }
-    });
-
-    router.post('/generate-opord', aiPlanningLimiter, requireAuth, async (req, res) => {
-      try {
-        const result = await generateOpord(req.body);
-        return res.status(201).json(result);
-      } catch (err) {
-        return res.status(400).json({ error: err.message });
-      }
-    });
     return res.status(201).json({ session });
   } catch (err) {
     logger.error('Failed to create analysis session', { error: err.message });

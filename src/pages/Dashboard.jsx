@@ -16,6 +16,7 @@ import UnitsPanel from '../components/UnitsPanel.jsx';
 import MarkupTools, { DEFAULT_LAYERS } from '../components/MarkupTools.jsx';
 import DocumentUpload from '../components/DocumentUpload.jsx';
 import COAAnalysisPanel from '../components/COAAnalysisPanel.jsx';
+import ScenarioLibrary from '../components/ScenarioLibrary.jsx';
 import useSupplyData from '../hooks/useSupplyData.js';
 import api, { setToken } from '../utils/api.js';
 import ApexSocket from '../utils/websocket.js';
@@ -260,6 +261,13 @@ export default function Dashboard({ onLogout }) {
           >
             After-Action Review
           </button>
+          <button
+            type="button"
+            className={activeTab === 'scenarios' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('scenarios')}
+          >
+            Scenarios
+          </button>
         </nav>
         {!AUTH_DISABLED && <button onClick={handleLogout}>Log out</button>}
       </header>
@@ -417,6 +425,9 @@ export default function Dashboard({ onLogout }) {
 
       <div className={activeTab === 'aar' ? 'dashboard-aar' : 'tab-hidden'}>
         <AARPanel />
+      </div>
+      <div className={activeTab === 'scenarios' ? 'dashboard-aar' : 'tab-hidden'}>
+        <ScenarioLibrary />
       </div>
     </div>
   );
