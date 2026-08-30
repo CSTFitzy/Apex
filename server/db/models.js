@@ -202,8 +202,9 @@ function isDbUnavailableError(err) {
   return /connect|Connection terminated|password authentication/i.test(message);
 }
 
-function toPublicUser({ password_hash, ...user }) {
-  return user;
+function toPublicUser(user) {
+  const { id, username, email, role, created_at } = user;
+  return { id, username, email, role, created_at };
 }
 
 export const Users = {
