@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Map from '../components/Map.jsx';
 import WeatherWidget from '../components/WeatherWidget.jsx';
+import AOOPanel from '../components/AOOPanel.jsx';
 import IntelligencePanel from '../components/IntelligencePanel.jsx';
 import AnalysisChart from '../components/AnalysisChart.jsx';
 import SimulationPanel from '../components/SimulationPanel.jsx';
@@ -16,6 +17,7 @@ import ApexSocket from '../utils/websocket.js';
 import { AUTH_DISABLED } from '../utils/auth.js';
 
 const SIDEBAR_TABS = [
+  { id: 'aoo', label: 'AOO' },
   { id: 'intel', label: 'Intel' },
   { id: 'simulation', label: 'Simulation' },
   { id: 'analytics', label: 'Analytics' },
@@ -30,7 +32,8 @@ export default function Dashboard({ onLogout }) {
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarTab, setSidebarTab] = useState('intel');
+  const [sidebarTab, setSidebarTab] = useState('aoo');
+  const [aooRadiusKm, setAooRadiusKm] = useState(5);
   const [simUnits, setSimUnits] = useState([]);
   const [simEvents, setSimEvents] = useState([]);
   const [heatmap, setHeatmap] = useState(null);
@@ -114,7 +117,13 @@ export default function Dashboard({ onLogout }) {
 
       <div className={activeTab === 'overview' ? 'dashboard-grid' : 'tab-hidden'}>
         <section className="dashboard-map">
-          <Map locations={locations} onSelect={setSelected} heatmap={heatmap} />
+          <Map
+            locations={locations}
+            onSelect={setSelected}
+            aoo={selected}
+            aooRadiusKm={aooRadiusKm}
+            heatmap={heatmap}
+          />
         </section>
 
         <aside className="dashboard-sidebar">
@@ -129,6 +138,10 @@ export default function Dashboard({ onLogout }) {
               </button>
             ))}
           </nav>
+
+          <div className={sidebarTab === 'aoo' ? '' : 'tab-hidden'}>
+            <AOOPanel aoo={selected} radiusKm={aooRadiusKm} onRadiusChange={setAooRadiusKm} />
+          </div>
 
           <div className={sidebarTab === 'intel' ? '' : 'tab-hidden'}>
             <WeatherWidget latitude={selected?.latitude} longitude={selected?.longitude} />

@@ -7,6 +7,7 @@ Open-source tactical management system utilizing ODIN, military intelligence dat
 ## Features
 
 - **Tactical Mapping** - ODIN integration with MIL-STD-2525C military symbology
+- **Area of Operations Analysis** - Click anywhere on the world map to select an AOO and generate an automated terrain & weather report (see [Area of Operations Analysis](#area-of-operations-analysis) below)
 - **Real-time Collaboration** - Distributed command & control via Matrix protocol
 - **Weather Integration** - Multi-source meteorological data (Open-Meteo, MET Norway, OpenWeatherMap)
 - **OSINT Data** - Open-source intelligence aggregation and analysis
@@ -73,6 +74,33 @@ See [API_INTEGRATIONS.md](./API_INTEGRATIONS.md) for code examples and integrati
 - ODIN Command & Control
 - Weather APIs (Open-Meteo, MET Norway, OpenWeatherMap)
 - OSINT Data Sources (Liveuamap, Oryx, ISW)
+
+## Area of Operations Analysis
+
+Click anywhere on the tactical map to select an area of operations (AOO). The
+**AOO** sidebar tab lets you name the area, set its radius, and run an
+automated analysis:
+
+- Elevation is sampled on a 7x7 grid across the AOO (Open-Meteo elevation API,
+  no key required) and reduced to min/max/mean elevation and relief.
+- Slope statistics (mean, max, fraction of steep ground) drive a terrain
+  classification (`water`, `flat`, `rolling`, `hilly`, `mountainous`) and a
+  cross-country mobility rating.
+- Key terrain (dominating high ground, low ground / likely water courses) and
+  likely natural obstacles are identified from the elevation profile.
+- The Open-Meteo forecast for the AOO centre is summarised into current
+  conditions, a 7-day forecast, and operational impact statements (aviation,
+  visibility, going, heat/cold casualty risk).
+
+Endpoints:
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/terrain/analyze?lat=&lon=&radius=` | Structured terrain + weather analysis (JSON) |
+| GET | `/api/terrain/report?lat=&lon=&radius=&name=&format=` | Terrain & weather report (`text` by default, `json` supported) |
+
+Weather lookups are best-effort: if the forecast provider is unreachable the
+terrain analysis is still returned.
 
 ## Supply Chain & Logistics
 
@@ -178,8 +206,8 @@ Key configuration files:
 
 ## Data Sources
 
-### Weather APIs
-- **Open-Meteo** - Global forecasts (no API key required)
+### Weather & Terrain APIs
+- **Open-Meteo** - Global forecasts and elevation data (no API key required)
 - **MET Norway** - High-resolution Nordic/European forecasts
 - **OpenWeatherMap** - Comprehensive global data
 

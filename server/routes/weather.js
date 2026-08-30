@@ -16,6 +16,51 @@ const router = Router();
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
+ * Fetch (and cache) an Open-Meteo forecast for the given coordinates.
+ * Exported so other modules (e.g. the terrain/AOO analysis) can reuse the
+ * same provider and caching behaviour.
+ * @param {number} latitude
+ * @param {number} longitude
+ */
+export async function fetchForecast(latitude, longitude) {
+  const provider = 'open-meteo';
+  const baseUrl = process.env.OPEN_METEO_API || 'https://api.open-meteo.com/v1/forecast';
+  const response = await axios.get(baseUrl, {
+    params: {
+      latitude,
+      longitude,
+      hourly: 'temperature_2m,precipitation,windspeed_10m,winddirection_10m',
+      daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum',
+      timezone: 'auto',
+    },
+    timeout: 5000,
+  });
+
+  const data = {
+    location: { latitude, longitude },
+    hourly: response.data.hourly,
+    daily: response.data.daily,
+    timezone: response.data.timezone,
+  };
+
+  // Caching is best-effort: a missing/unavailable database must not prevent
+  // callers from receiving live forecast data.
+  try {
+    await WeatherCache.upsert({
+      latitude,
+      longitude,
+      provider,
+      data,
+      expiresAt: new Date(Date.now() + CACHE_TTL_MS),
+    });
+  } catch (err) {
+    logger.warn('Failed to cache weather forecast', { error: err.message });
+  }
+
+  return data;
+}
+
+/**
  * GET /api/weather/forecast?lat=&lon=
  * Fetch a weather forecast for the given coordinates using Open-Meteo
  * (no API key required). Falls back to cached data on upstream failure.
@@ -32,42 +77,19 @@ router.get('/forecast', requireAuth, async (req, res) => {
   const provider = 'open-meteo';
 
   try {
-    const baseUrl = process.env.OPEN_METEO_API || 'https://api.open-meteo.com/v1/forecast';
-    const response = await axios.get(baseUrl, {
-      params: {
-        latitude,
-        longitude,
-        hourly: 'temperature_2m,precipitation,windspeed_10m,winddirection_10m',
-        daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum',
-        timezone: 'auto',
-      },
-      timeout: 5000,
-    });
-
-    const data = {
-      location: { latitude, longitude },
-      hourly: response.data.hourly,
-      daily: response.data.daily,
-      timezone: response.data.timezone,
-    };
-
-    await WeatherCache.upsert({
-      latitude,
-      longitude,
-      provider,
-      data,
-      expiresAt: new Date(Date.now() + CACHE_TTL_MS),
-    });
-
-    return res.json(data);
+    return res.json(await fetchForecast(latitude, longitude));
   } catch (err) {
     logger.warn('Weather forecast fetch failed, attempting cache fallback', {
       error: err.message,
     });
 
-    const cached = await WeatherCache.findLatest({ latitude, longitude, provider });
-    if (cached) {
-      return res.json({ ...cached.data, cached: true });
+    try {
+      const cached = await WeatherCache.findLatest({ latitude, longitude, provider });
+      if (cached) {
+        return res.json({ ...cached.data, cached: true });
+      }
+    } catch (cacheErr) {
+      logger.warn('Weather cache lookup failed', { error: cacheErr.message });
     }
 
     return res.status(502).json({ error: 'Failed to fetch weather data' });
