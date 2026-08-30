@@ -321,3 +321,130 @@ export interface HeatmapResult {
   maxCount: number;
   cells: HeatmapCell[];
 }
+
+// ---------------------------------------------------------------------------
+// Tactical communications (WebRTC radio + real-time messaging)
+// ---------------------------------------------------------------------------
+
+export type MessageType = 'INTEL' | 'ORDER' | 'CASREP' | 'SUPPORT' | 'SITREP' | 'CUSTOM';
+
+/** NATO-style message precedence, lowest to highest. */
+export type MessageUrgency = 'ROUTINE' | 'PRIORITY' | 'IMMEDIATE' | 'FLASH';
+
+export type MessageStatus = 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ';
+
+export type VoiceQuality = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'LOST';
+
+export type ChannelStatus = 'IDLE' | 'BUSY' | 'COMPROMISED';
+
+export type CommsRole = 'COMMANDER' | 'OFFICER' | 'OPERATOR';
+
+export interface CommsIdentity {
+  unitId: string;
+  callsign: string;
+  role: CommsRole;
+}
+
+export interface TacticalMessage {
+  id: string;
+  senderId: string;
+  senderCallsign: string;
+  recipientIds: string[];
+  channelId: string | null;
+  type: MessageType;
+  urgency: MessageUrgency;
+  subject: string;
+  content: string;
+  fields: Record<string, string>;
+  e2e?: { ciphertext: string; nonce: string; algorithm: string } | null;
+  requiresAck: boolean;
+  acknowledgedBy: string[];
+  readBy: string[];
+  status: MessageStatus;
+  signature: string;
+  sentAt: string;
+  deliveredAt: string | null;
+  readAt: string | null;
+}
+
+export interface ChannelMember {
+  unitId: string;
+  callsign: string;
+  joinedAt: string;
+  muted: boolean;
+}
+
+export interface RadioChannel {
+  id: string;
+  name: string;
+  frequencyMHz: number;
+  encrypted: boolean;
+  members: ChannelMember[];
+  activeSpeakerId: string | null;
+  status: ChannelStatus;
+  createdAt: string;
+}
+
+export interface VoiceLogEntry {
+  id: string;
+  channelId: string;
+  speakerId: string;
+  speakerCallsign: string;
+  audio: string | null;
+  transcript: string;
+  durationMs: number;
+  quality: VoiceQuality;
+  timestamp: string;
+}
+
+export interface PresenceRecord {
+  unitId: string;
+  callsign: string;
+  online: boolean;
+  lastSeen: string;
+  channelId: string | null;
+  /** Base64 SPKI ECDH public key used to derive end-to-end session keys. */
+  publicKey?: string | null;
+}
+
+/** Radio link quality returned by POST /api/comms/signal. */
+export interface LinkQuality {
+  bars: number;
+  quality: VoiceQuality;
+  snrDb: number;
+  distanceKm: number;
+  staticLevel: number;
+  interceptRisk: number;
+  factors: string[];
+  peerId?: string | null;
+}
+
+export interface TypingIndicator {
+  unitId: string;
+  callsign: string;
+  channelId: string | null;
+  typing: boolean;
+}
+
+/** A remote station currently connected over WebRTC. */
+export interface RadioPeer {
+  socketId: string;
+  unitId: string;
+  callsign: string;
+  connectionState: RTCPeerConnectionState;
+  speaking: boolean;
+}
+
+/** Kinds of simulation event that can generate automatic radio traffic. */
+export type SimEventKind = 'CONTACT' | 'CASUALTY' | 'DESTROYED' | 'ADVANCE';
+
+/** A structured simulation event forwarded to the communications subsystem. */
+export interface TacticalSimEvent {
+  kind: SimEventKind;
+  unitId: string;
+  unitName: string;
+  affiliation: Affiliation;
+  position: LatLon;
+  casualties?: number;
+  detail: string;
+}

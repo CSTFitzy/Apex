@@ -14,6 +14,11 @@ import terrainRouter from './routes/terrain.js';
 import documentsRouter from './routes/documents.js';
 import enemyRouter from './routes/enemy.js';
 import analyticsRouter from './routes/analytics.js';
+import messagesRouter from './routes/messages.js';
+import commsRouter from './routes/comms.js';
+import webrtcRouter from './routes/webrtc.js';
+import { registerCommsGateway } from './comms/gateway.js';
+import { commsStore, type RedisLike } from './comms/store.js';
 
 dotenv.config();
 
@@ -65,6 +70,9 @@ app.use('/api/terrain', terrainRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/enemy', enemyRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/messages', messagesRouter);
+app.use('/api/comms', commsRouter);
+app.use('/api/webrtc', webrtcRouter);
 
 app.get('/api/map/data', async (req: Request, res: Response) => {
   try {
@@ -120,6 +128,9 @@ io.on('connection', (socket) => {
   });
 });
 
+// Tactical comms: WebRTC signalling, radio channels and real-time messaging
+registerCommsGateway(io);
+
 // Initialize database
 async function initializeDatabase() {
   try {
@@ -142,8 +153,17 @@ async function initializeDatabase() {
 }
 
 // Start server
+const RETENTION_SWEEP_MS = 60 * 60 * 1000;
+
 httpServer.listen(port, async () => {
   await initializeDatabase();
+  // Tactical comms persistence (PostgreSQL archive + Redis queue/presence).
+  // Both are optional: the store falls back to in-memory state when absent.
+  await commsStore.init(pool, redisClient as unknown as RedisLike);
+  // Apply the configured message retention policy hourly (COMMS_RETENTION_DAYS).
+  setInterval(() => {
+    void commsStore.applyRetentionPolicy();
+  }, RETENTION_SWEEP_MS).unref();
   console.log(`Server running on http://localhost:${port}`);
 });
 

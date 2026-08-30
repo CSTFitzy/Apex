@@ -8,11 +8,14 @@ import EnemyPanel from './components/EnemyPanel'
 import SimulationPanel from './components/SimulationPanel'
 import PredictionPanel from './components/PredictionPanel'
 import AnalyticsPanel from './components/AnalyticsPanel'
+import CommunicationsPanel from './components/comms/CommunicationsPanel'
 import Cesium3DView from './components/Cesium3DView'
 import api from './api/client'
 import { buildAO, rectangleVertices } from './utils/geometry'
 import { pushHistory } from './utils/prediction'
 import { usePredictions } from './hooks/usePredictions'
+import { useCommsIntegration } from './hooks/useCommsIntegration'
+import { useCommsTransmitters } from './hooks/useCommsTransmitters'
 import type {
   AnalyticsEvent,
   AOBounds,
@@ -27,10 +30,11 @@ import type {
   SpotHeight,
   TacticalUnit,
   ViewshedResult,
+  WeatherData,
 } from './types'
 import './App.css'
 
-type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions' | 'analytics'
+type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions' | 'analytics' | 'comms'
 const MAX_TRACKED_EVENTS = 500
 
 /** Observer eye height above ground level used by the LOS visibility tool. */
@@ -69,14 +73,20 @@ function App() {
   const [units, setUnits] = useState<TacticalUnit[]>([])
   const [unitHistory, setUnitHistory] = useState<Record<string, LatLon[]>>({})
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+  const [weather, setWeather] = useState<WeatherData | null>(null)
 
-  // Analytics: structured tactical event log (feeds KPIs, BDA, heatmaps, AAR).
+  // Comms integration: simulation events raise radio traffic, and inbound
+  // messages (orders, intel, casualty reports) feed back into the simulation.
+  const { handleSimulationEvent: handleTacticalEvent } = useCommsIntegration(units, setUnits)
+  const transmitters = useCommsTransmitters(units)
+
+  // Analytics: structured tactical event log (feeds KPIs, BDA, heatmaps).
   const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([])
   const [missionStartTime, setMissionStartTime] = useState<number | null>(null)
   const [activeHeatmap, setActiveHeatmap] = useState<HeatmapType | null>(null)
   const [heatmapCells, setHeatmapCells] = useState<HeatmapCell[]>([])
 
-  const handleSimulationEvent = (event: AnalyticsEvent) => {
+  const handleAnalyticsEvent = (event: AnalyticsEvent) => {
     setMissionStartTime((prev) => prev ?? event.timestamp)
     setAnalyticsEvents((prev) => [...prev, event].slice(-MAX_TRACKED_EVENTS))
     api.post('/analytics/events', event).catch((err) => console.error('Failed to log analytics event:', err))
@@ -215,6 +225,9 @@ function App() {
           <button className={`nav-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
             Analytics
           </button>
+          <button className={`nav-btn ${activeTab === 'comms' ? 'active' : ''}`} onClick={() => setActiveTab('comms')}>
+            Comms
+          </button>
         </nav>
       </header>
 
@@ -244,6 +257,7 @@ function App() {
               viewshed={viewshed}
               predictions={predictions}
               heatmapCells={heatmapCells}
+              transmitters={transmitters}
             />
           ) : (
             <Cesium3DView center={aoCenter ?? mapCenter} ao={ao} observers={observers} units={units} />
@@ -275,7 +289,7 @@ function App() {
               onTerrainSummary={setTerrainSummary}
             />
           )}
-          {activeTab === 'weather' && <WeatherPanel ao={ao} />}
+          {activeTab === 'weather' && <WeatherPanel ao={ao} onWeather={setWeather} />}
           {activeTab === 'documents' && (
             <DocumentsPanel onAOIdentified={handleAOIdentified} onExtraction={setDocResult} />
           )}
@@ -295,8 +309,17 @@ function App() {
               units={units}
               onUnitsChange={setUnits}
               counterPlan={counterPlan}
-              onEvent={handleSimulationEvent}
+              onEvent={handleAnalyticsEvent}
+              onTacticalEvent={handleTacticalEvent}
             />
+          </div>
+          {/*
+            Like the simulation panel, the comms dashboard stays mounted so that
+            the radio net connection, push-to-talk session and inbound message
+            stream survive tab switches.
+          */}
+          <div className={activeTab === 'comms' ? undefined : 'tab-hidden'}>
+            <CommunicationsPanel units={units} weather={weather} />
           </div>
           {activeTab === 'predictions' && (
             <PredictionPanel

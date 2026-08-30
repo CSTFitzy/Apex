@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AnalyticsEvent, CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
+import type {
+  AnalyticsEvent,
+  CounterPlanResult,
+  LatLon,
+  SimulationEvent,
+  TacticalSimEvent,
+  TacticalUnit,
+} from '../types';
 
 interface Props {
   aoCenter: LatLon | null;
@@ -8,6 +15,8 @@ interface Props {
   counterPlan: CounterPlanResult | null;
   /** Emits structured tactical events (casualty reports, engagements) for the Analytics dashboard. */
   onEvent?: (event: AnalyticsEvent) => void;
+  /** Forwards combat events so the comms subsystem can raise automatic radio traffic. */
+  onTacticalEvent?: (event: TacticalSimEvent) => void;
 }
 
 const TICK_MS = 1000;
@@ -53,7 +62,14 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
   ];
 }
 
-export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan, onEvent }: Props) {
+export default function SimulationPanel({
+  aoCenter,
+  units,
+  onUnitsChange,
+  counterPlan,
+  onEvent,
+  onTacticalEvent,
+}: Props) {
   const [running, setRunning] = useState(false);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -71,6 +87,9 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
     setEvents([]);
     log('Simulation initialized: friendly and enemy forces deployed to start positions.');
   };
+
+  const eventSinkRef = useRef(onTacticalEvent);
+  eventSinkRef.current = onTacticalEvent;
 
   const tick = useCallback(() => {
     const current = unitsRef.current;
@@ -136,6 +155,34 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
             onEvent?.({ timestamp, eventType: 'unit_destroyed', unitId: hostile.id, location: hostile.position });
           }
 
+          eventSinkRef.current?.({
+            kind: 'CONTACT',
+            unitId: hostile.id,
+            unitName: hostile.name,
+            affiliation: hostile.affiliation,
+            position: hostile.position,
+            detail: `${friendly.name} in contact with ${hostile.name}.`,
+          });
+          eventSinkRef.current?.({
+            kind: 'CASUALTY',
+            unitId: friendly.id,
+            unitName: friendly.name,
+            affiliation: friendly.affiliation,
+            position: friendly.position,
+            casualties: friendlyDamage,
+            detail: `${friendly.name} sustained ${friendlyDamage} casualties.`,
+          });
+          if (next[friendlyIdx].status === 'destroyed') {
+            eventSinkRef.current?.({
+              kind: 'DESTROYED',
+              unitId: friendly.id,
+              unitName: friendly.name,
+              affiliation: friendly.affiliation,
+              position: friendly.position,
+              detail: `${friendly.name} is combat ineffective.`,
+            });
+          }
+
           const tactic = counterPlan?.matchedDoctrine[0]?.tactics[0];
           log(
             `CONTACT: ${friendly.name} engaged ${hostile.name}. ` +
@@ -155,6 +202,14 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
             Math.floor(Math.random() * (counterPlan?.matchedDoctrine[0]?.tactics.length || 1))
           ];
           log(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
+          eventSinkRef.current?.({
+            kind: 'ADVANCE',
+            unitId: unit.id,
+            unitName: unit.name,
+            affiliation: unit.affiliation,
+            position: unit.position,
+            detail: `${unit.name} continues to advance.`,
+          });
         }
       }
     }
