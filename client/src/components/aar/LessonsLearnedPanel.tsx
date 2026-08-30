@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { LessonCategory, LessonInsight } from '../../types';
-import { getLessons } from '../../api/aar';
+import { getAIStatus, getLessons } from '../../api/aar';
 
 interface Props {
   operationId: string;
@@ -29,6 +29,13 @@ export default function LessonsLearnedPanel({ operationId }: Props) {
   const [lessons, setLessons] = useState<LessonInsight[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [claudeConfigured, setClaudeConfigured] = useState(false);
+
+  useEffect(() => {
+    getAIStatus()
+      .then((s) => setClaudeConfigured(s.claudeConfigured))
+      .catch(() => setClaudeConfigured(false));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +54,11 @@ export default function LessonsLearnedPanel({ operationId }: Props) {
 
   return (
     <div className="aar-lessons">
+      <p className="hint-text">
+        {claudeConfigured
+          ? '🤖 Powered by Claude (Anthropic) tactical analysis.'
+          : 'ℹ️ Claude API not configured - showing offline rule-based analysis. Set CLAUDE_API_KEY to enable AI-generated insights.'}
+      </p>
       <input
         type="text"
         placeholder="Search lessons learned..."
@@ -63,7 +75,8 @@ export default function LessonsLearnedPanel({ operationId }: Props) {
             <ul>
               {categoryLessons.map((l) => (
                 <li key={l.id} className={`lesson-severity-${l.severity}`}>
-                  <strong>{l.title}</strong> <span className="lesson-badge">{l.severity}</span>
+                  <strong>{l.title}</strong> <span className="lesson-badge">{l.severity}</span>{' '}
+                  <span className="lesson-source-badge">{l.source === 'claude' ? '🤖 AI' : '📋 rule-based'}</span>
                   <p>{l.detail}</p>
                 </li>
               ))}

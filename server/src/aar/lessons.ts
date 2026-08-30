@@ -1,10 +1,12 @@
 import { randomUUID } from 'crypto';
 import type { LessonInsight, Operation, PerformanceAnalytics } from './types.js';
+import { generateLessonsWithClaude, isClaudeConfigured } from './claudeService.js';
 
 /**
- * Rule-based "AI" lessons-learned generator. Analyzes an operation's recorded
- * events and computed performance analytics to produce structured insights
- * across the six standard AAR categories.
+ * Rule-based lessons-learned generator used as an offline fallback when the
+ * Claude API is not configured or a request to it fails. Analyzes an
+ * operation's recorded events and computed performance analytics to produce
+ * structured insights across the six standard AAR categories.
  */
 export function generateLessons(operation: Operation, analytics: PerformanceAnalytics): LessonInsight[] {
   const now = Date.now();
@@ -27,6 +29,7 @@ export function generateLessons(operation: Operation, analytics: PerformanceAnal
       severity,
       applicability,
       createdAt: now,
+      source: 'rule_based',
     });
   };
 
@@ -164,4 +167,23 @@ export function searchLessons(lessons: LessonInsight[], query: string): LessonIn
   return lessons.filter(
     (l) => l.title.toLowerCase().includes(q) || l.detail.toLowerCase().includes(q) || l.category.includes(q)
   );
+}
+
+/**
+ * Produces lessons learned for an operation, preferring a real Claude API analysis
+ * when configured and falling back transparently to the offline rule-based
+ * generator if Claude is not configured or the request fails.
+ */
+export async function getLessonsForOperation(
+  operation: Operation,
+  analytics: PerformanceAnalytics
+): Promise<LessonInsight[]> {
+  if (isClaudeConfigured()) {
+    try {
+      return await generateLessonsWithClaude(operation, analytics);
+    } catch (error) {
+      console.error(`Claude lessons generation failed for operation ${operation.id}, falling back to rule-based analysis:`, error);
+    }
+  }
+  return generateLessons(operation, analytics);
 }

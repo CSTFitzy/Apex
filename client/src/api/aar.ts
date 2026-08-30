@@ -74,3 +74,13 @@ export async function generateTrainingScenario(
 export function reportUrl(operationId: string, format: 'json' | 'csv' | 'html'): string {
   return `/api/aar/operations/${encodeURIComponent(operationId)}/report?format=${encodeURIComponent(format)}`;
 }
+
+export async function getAIStatus(): Promise<{ claudeConfigured: boolean }> {
+  const res = await api.get('/aar/ai/status');
+  return res.data;
+}
+
+export async function getNarrativeReport(operationId: string): Promise<{ narrative: string; source: 'claude' }> {
+  const res = await api.get(`/aar/operations/${operationId}/narrative`);
+  return res.data;
+}

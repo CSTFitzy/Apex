@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { aarStore } from '../aar/store.js';
 import { computeAnalytics } from '../aar/analytics.js';
-import { generateLessons, searchLessons } from '../aar/lessons.js';
+import { getLessonsForOperation, searchLessons } from '../aar/lessons.js';
 import { compareOperations } from '../aar/compare.js';
 import { generateTrainingScenario } from '../aar/training.js';
 import { buildReportBundle, toCsvReport, toHtmlReport, toJsonReport } from '../aar/reports.js';
+import { generateNarrativeReport, isClaudeConfigured } from '../aar/claudeService.js';
 import type { AARUnit, OperationEvent, TrainingScenario } from '../aar/types.js';
 
 const router = Router();
@@ -65,22 +66,34 @@ router.get('/operations/:id/analytics', (req: Request, res: Response) => {
 
 // --- Lessons learned -----------------------------------------------------------
 
-router.get('/operations/:id/lessons', (req: Request, res: Response) => {
+router.get('/operations/:id/lessons', async (req: Request, res: Response) => {
   const operation = aarStore.getOperation(req.params.id);
   if (!operation) return res.status(404).json({ error: 'Operation not found' });
   const analytics = computeAnalytics(operation);
-  const lessons = generateLessons(operation, analytics);
-  const query = typeof req.query.q === 'string' ? req.query.q : '';
-  res.json(query ? searchLessons(lessons, query) : lessons);
+  try {
+    const lessons = await getLessonsForOperation(operation, analytics);
+    const query = typeof req.query.q === 'string' ? req.query.q : '';
+    res.json(query ? searchLessons(lessons, query) : lessons);
+  } catch (error) {
+    console.error(`Failed to generate lessons for operation ${operation.id}:`, error);
+    res.status(500).json({ error: 'Failed to generate lessons learned' });
+  }
 });
 
-router.get('/lessons/search', (req: Request, res: Response) => {
+router.get('/lessons/search', async (req: Request, res: Response) => {
   const query = typeof req.query.q === 'string' ? req.query.q : '';
-  const allLessons = aarStore.listOperations().flatMap((op) => {
-    const analytics = computeAnalytics(op);
-    return generateLessons(op, analytics);
-  });
+  const operations = aarStore.listOperations();
+  const lessonsByOperation = await Promise.all(
+    operations.map((op) => getLessonsForOperation(op, computeAnalytics(op)))
+  );
+  const allLessons = lessonsByOperation.flat();
   res.json(searchLessons(allLessons, query));
+});
+
+// --- AI status -----------------------------------------------------------------
+
+router.get('/ai/status', (_req: Request, res: Response) => {
+  res.json({ claudeConfigured: isClaudeConfigured() });
 });
 
 // --- Historical comparison ------------------------------------------------------
@@ -110,12 +123,29 @@ router.post('/operations/:id/training', (req: Request, res: Response) => {
 
 // --- Report export ------------------------------------------------------------
 
-router.get('/operations/:id/report', (req: Request, res: Response) => {
+router.get('/operations/:id/narrative', async (req: Request, res: Response) => {
   const operation = aarStore.getOperation(req.params.id);
   if (!operation) return res.status(404).json({ error: 'Operation not found' });
   const analytics = computeAnalytics(operation);
-  const lessons = generateLessons(operation, analytics);
-  const bundle = buildReportBundle(operation, analytics, lessons);
+  try {
+    const lessons = await getLessonsForOperation(operation, analytics);
+    if (!isClaudeConfigured()) {
+      return res.status(503).json({ error: 'Claude API is not configured (set CLAUDE_API_KEY)' });
+    }
+    const narrative = await generateNarrativeReport(operation, analytics, lessons);
+    res.json({ narrative, source: 'claude' });
+  } catch (error) {
+    console.error(`Failed to generate narrative for operation ${operation.id}:`, error);
+    res.status(502).json({ error: 'Claude narrative generation failed' });
+  }
+});
+
+router.get('/operations/:id/report', async (req: Request, res: Response) => {
+  const operation = aarStore.getOperation(req.params.id);
+  if (!operation) return res.status(404).json({ error: 'Operation not found' });
+  const analytics = computeAnalytics(operation);
+  const lessons = await getLessonsForOperation(operation, analytics);
+  const bundle = await buildReportBundle(operation, analytics, lessons);
   const format = typeof req.query.format === 'string' ? req.query.format : 'json';
 
   if (format === 'csv') {

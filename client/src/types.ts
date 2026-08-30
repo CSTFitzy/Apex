@@ -318,6 +318,8 @@ export interface LessonInsight {
   severity: 'low' | 'medium' | 'high';
   applicability: 'unit' | 'commander' | 'doctrine' | 'general';
   createdAt: number;
+  /** Which engine produced this insight - a real Claude API call, or the offline rule-based fallback. */
+  source: 'claude' | 'rule_based';
 }
 
 export interface TrainingScenario {
