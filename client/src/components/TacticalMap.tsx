@@ -47,6 +47,7 @@ const AO_COLOR = '#3b82f6';
 const VISIBLE_COLOR = '#00ff88';
 const BLOCKED_COLOR = '#ff4444';
 const PREDICTION_COLOR = '#9b59b6';
+const COMMS_COLOR = '#00d1ff';
 /** Minimum interval (ms) between live radius updates while dragging a LOS circle. */
 const DRAG_THROTTLE_MS = 80;
 
@@ -66,6 +67,19 @@ interface Props {
   viewshed: ViewshedResult | null;
   /** AI-forecast future positions for hostile units, rendered as confidence halos. */
   predictions?: UnitPrediction[];
+  /** Stations currently transmitting on a radio net, with their signal coverage. */
+  transmitters?: CommsTransmitter[];
+}
+
+/** A station transmitting on a radio net, rendered as a coverage circle on the map. */
+export interface CommsTransmitter {
+  unitId: string;
+  callsign: string;
+  position: LatLon;
+  /** Estimated usable radio coverage radius in metres. */
+  coverageM: number;
+  color: string;
+  channelName: string;
 }
 
 function unitIcon(unit: TacticalUnit): L.DivIcon {
@@ -330,6 +344,7 @@ export default function TacticalMap({
   units,
   viewshed,
   predictions = [],
+  transmitters = [],
 }: Props) {
   const handleAOComplete = (nextAO: AreaOfOperations) => {
     onAOChange(nextAO);
@@ -465,6 +480,33 @@ export default function TacticalMap({
             <br />Strength: {unit.strength}
           </Popup>
         </Marker>
+      ))}
+
+      {/* Communications overlay: signal coverage and an active-transmission marker. */}
+      {transmitters.map((tx) => (
+        <Fragment key={`tx-${tx.unitId}`}>
+          <Circle
+            center={[tx.position.lat, tx.position.lon]}
+            radius={tx.coverageM}
+            pathOptions={{
+              color: tx.color,
+              weight: 1,
+              dashArray: '6 6',
+              fillColor: tx.color,
+              fillOpacity: 0.06,
+              interactive: false,
+            }}
+          />
+          <CircleMarker
+            center={[tx.position.lat, tx.position.lon]}
+            radius={7}
+            pathOptions={{ color: COMMS_COLOR, fillColor: tx.color, fillOpacity: 0.85 }}
+          >
+            <Tooltip permanent direction="top" offset={[0, -8]}>
+              {`📡 ${tx.callsign} transmitting — ${tx.channelName}`}
+            </Tooltip>
+          </CircleMarker>
+        </Fragment>
       ))}
 
       {predictions.map((prediction) =>

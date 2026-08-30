@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AAREvent, CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
+import type {
+  AAREvent,
+  CounterPlanResult,
+  LatLon,
+  SimulationEvent,
+  TacticalSimEvent,
+  TacticalUnit,
+} from '../types';
 import { endOperation, recordFrame, startOperation } from '../api/aar';
 
 interface Props {
@@ -9,6 +16,8 @@ interface Props {
   counterPlan: CounterPlanResult | null;
   /** Called whenever the running simulation is recorded to the AAR system, so the AAR panel can select it. */
   onOperationRecorded?: (operationId: string) => void;
+  /** Forwards combat events so the comms subsystem can raise automatic radio traffic. */
+  onTacticalEvent?: (event: TacticalSimEvent) => void;
 }
 
 /** Classifies a narration log message into an AAR event type for after-action analysis. */
@@ -60,7 +69,17 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
   ];
 }
 
+<<<<<<< HEAD
 export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan, onOperationRecorded }: Props) {
+=======
+export default function SimulationPanel({
+  aoCenter,
+  units,
+  onUnitsChange,
+  counterPlan,
+  onTacticalEvent,
+}: Props) {
+>>>>>>> origin/feature/complete-battle-management-system
   const [running, setRunning] = useState(false);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -96,6 +115,9 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
     log('Operation finalized and saved to After-Action Review.');
     setOperationId(null);
   };
+
+  const eventSinkRef = useRef(onTacticalEvent);
+  eventSinkRef.current = onTacticalEvent;
 
   const tick = useCallback(() => {
     const current = unitsRef.current;
@@ -138,6 +160,34 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           if (next[friendlyIdx].strength === 0) next[friendlyIdx].status = 'destroyed';
           if (next[hostileIdx].strength === 0) next[hostileIdx].status = 'destroyed';
 
+          eventSinkRef.current?.({
+            kind: 'CONTACT',
+            unitId: hostile.id,
+            unitName: hostile.name,
+            affiliation: hostile.affiliation,
+            position: hostile.position,
+            detail: `${friendly.name} in contact with ${hostile.name}.`,
+          });
+          eventSinkRef.current?.({
+            kind: 'CASUALTY',
+            unitId: friendly.id,
+            unitName: friendly.name,
+            affiliation: friendly.affiliation,
+            position: friendly.position,
+            casualties: friendlyDamage,
+            detail: `${friendly.name} sustained ${friendlyDamage} casualties.`,
+          });
+          if (next[friendlyIdx].status === 'destroyed') {
+            eventSinkRef.current?.({
+              kind: 'DESTROYED',
+              unitId: friendly.id,
+              unitName: friendly.name,
+              affiliation: friendly.affiliation,
+              position: friendly.position,
+              detail: `${friendly.name} is combat ineffective.`,
+            });
+          }
+
           const tactic = counterPlan?.matchedDoctrine[0]?.tactics[0];
           logAndTrack(
             `CONTACT: ${friendly.name} engaged ${hostile.name}. ` +
@@ -156,7 +206,19 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           const action = counterPlan?.matchedDoctrine[0]?.tactics[
             Math.floor(Math.random() * (counterPlan?.matchedDoctrine[0]?.tactics.length || 1))
           ];
+<<<<<<< HEAD
           logAndTrack(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
+=======
+          log(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
+          eventSinkRef.current?.({
+            kind: 'ADVANCE',
+            unitId: unit.id,
+            unitName: unit.name,
+            affiliation: unit.affiliation,
+            position: unit.position,
+            detail: `${unit.name} continues to advance.`,
+          });
+>>>>>>> origin/feature/complete-battle-management-system
         }
       }
     }

@@ -899,6 +899,7 @@
   margin-top: 8px;
 }
 
+<<<<<<< HEAD
 /* --- After-Action Review (AAR) ------------------------------------------- */
 
 .aar-operation-select {
@@ -910,12 +911,57 @@
 }
 
 .aar-operation-select select {
+=======
+/* ============================================================
+   Communications dashboard (tactical radio + messaging)
+   ============================================================ */
+
+.comms-panel .comms-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 14px;
+}
+
+.comms-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #90caf9;
+  background: #131a2c;
+  border: 1px solid #1f2b45;
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+}
+
+.comms-signin label,
+.message-composer label,
+.comms-panel label {
+  display: block;
+  font-size: 11px;
+  color: #6b7fa0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 0 3px;
+}
+
+.comms-signin input,
+.comms-signin select,
+.message-composer input,
+.message-composer select,
+.message-composer textarea,
+.message-search input,
+.message-filters select {
+  width: 100%;
+>>>>>>> origin/feature/complete-battle-management-system
   background-color: #0f1423;
   border: 1px solid #00b4d8;
   color: #e0e0e0;
   padding: 6px;
   border-radius: 4px;
   font-size: 12px;
+<<<<<<< HEAD
 }
 
 .aar-subtab-nav {
@@ -973,6 +1019,427 @@
   list-style: none;
   padding: 0;
   margin: 0 0 10px 0;
+=======
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.comms-alert {
+  border-left: 3px solid #e74c3c;
+  background: rgba(231, 76, 60, 0.12);
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+/* --- Radio channels --- */
+
+.channel-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.channel-item {
+  border: 1px solid #1f2b45;
+  border-left: 3px solid #6b7fa0;
+  border-radius: 4px;
+  background: #131a2c;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.channel-item.joined {
+  border-left-color: #00b4d8;
+  box-shadow: 0 0 8px rgba(0, 180, 216, 0.25);
+}
+
+.channel-item.status-busy {
+  border-left-color: #f1c40f;
+}
+
+.channel-item.status-compromised {
+  border-left-color: #e74c3c;
+}
+
+.channel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.channel-name {
+  font-weight: 600;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+
+.channel-freq,
+.channel-members,
+.channel-meta,
+.call-freq,
+.call-channel {
+  font-size: 11px;
+  color: #6b7fa0;
+}
+
+.channel-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7fa0;
+}
+
+.channel-status.status-busy {
+  color: #f1c40f;
+}
+
+.channel-status.status-compromised {
+  color: #e74c3c;
+}
+
+.active-speaker {
+  font-size: 11px;
+  color: #f1c40f;
+}
+
+.channel-actions,
+.call-actions,
+.voice-log-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* --- Push to talk / active call --- */
+
+.active-call {
+  border: 1px solid #00b4d8;
+  border-radius: 4px;
+  background: #131a2c;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.active-call-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ptt-button {
+  width: 100%;
+  padding: 16px;
+  margin: 10px 0;
+  border: 2px solid #00b4d8;
+  border-radius: 6px;
+  background: #1a2940;
+  color: #90caf9;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ptt-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ptt-button.transmitting {
+  background: #e74c3c;
+  border-color: #ff6b6b;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.7);
+}
+
+.receiving-block {
+  margin-top: 8px;
+}
+
+.receiving-label {
+  font-size: 12px;
+  color: #2ecc71;
+}
+
+.waveform {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #2ecc71, #00b4d8);
+  margin-top: 4px;
+  transition: width 0.1s linear;
+}
+
+.call-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+  color: #6b7fa0;
+  margin-top: 6px;
+}
+
+.squelch-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #90caf9;
+}
+
+/* --- Signal strength --- */
+
+.signal-strength {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.signal-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.signal-bar {
+  width: 4px;
+  background: #2a3550;
+  border-radius: 1px;
+}
+
+.signal-label {
+  font-size: 10px;
+  margin-left: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* --- Unit roster --- */
+
+.unit-roster {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.roster-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.roster-item.selected {
+  background: rgba(0, 180, 216, 0.15);
+}
+
+.roster-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.roster-callsign {
+  font-weight: 600;
+}
+
+.roster-net {
+  font-size: 10px;
+  color: #6b7fa0;
+  margin-left: 6px;
+}
+
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.presence-dot.online {
+  background: #2ecc71;
+  box-shadow: 0 0 6px rgba(46, 204, 113, 0.8);
+}
+
+.presence-dot.offline {
+  background: #6b7fa0;
+}
+
+.unread-badge {
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 9px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* --- Messaging --- */
+
+.message-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0;
+}
+
+.filter-btn {
+  background: #1a2940;
+  border: 1px solid #2a3550;
+  color: #90caf9;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  border-color: #00b4d8;
+  color: #00b4d8;
+}
+
+.message-search {
+  margin-bottom: 8px;
+}
+
+.message-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.message-item {
+  border: 1px solid #1f2b45;
+  border-left: 3px solid #6b7fa0;
+  border-radius: 4px;
+  background: #131a2c;
+  padding: 8px 10px;
+  margin-bottom: 7px;
+  cursor: pointer;
+}
+
+.message-item.unread {
+  background: #16203a;
+  border-color: #00b4d8;
+}
+
+.message-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.message-sender {
+  font-weight: 600;
+  font-size: 12px;
+  color: #e0e0e0;
+}
+
+.message-type,
+.message-urgency {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.message-time,
+.message-meta,
+.event-time {
+  font-size: 10px;
+  color: #6b7fa0;
+}
+
+.message-subject {
+  font-size: 12px;
+  color: #90caf9;
+  margin-top: 3px;
+}
+
+.message-content {
+  font-size: 12px;
+  color: #e0e0e0;
+  margin-top: 6px;
+  white-space: pre-wrap;
+}
+
+.message-detail {
+  margin-top: 6px;
+  border-top: 1px solid #1f2b45;
+  padding-top: 6px;
+}
+
+.message-fields {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: #90caf9;
+}
+
+.message-fields dt {
+  color: #6b7fa0;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.message-fields dd {
+  margin: 0 0 4px;
+}
+
+.typing-indicator {
+  font-size: 11px;
+  color: #f1c40f;
+  font-style: italic;
+  min-height: 14px;
+}
+
+.addressee-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.chip {
+  background: #1a2940;
+  border: 1px solid #00b4d8;
+  color: #90caf9;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.protocol-preview {
+  background: #0b1020;
+  border: 1px dashed #2a3550;
+  border-radius: 4px;
+  padding: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #90caf9;
+  white-space: pre-wrap;
+  margin-top: 6px;
+>>>>>>> origin/feature/complete-battle-management-system
 }
 
 .link-btn {
@@ -980,6 +1447,7 @@
   border: none;
   color: #00b4d8;
   cursor: pointer;
+<<<<<<< HEAD
   font-size: 12px;
   padding: 2px 0;
   text-decoration: underline;
@@ -1096,3 +1564,22 @@
   white-space: pre-wrap;
   line-height: 1.5;
 }
+=======
+  font: inherit;
+  font-size: 11px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.link-btn.danger {
+  color: #ff6b6b;
+}
+
+.voice-log {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+>>>>>>> origin/feature/complete-battle-management-system
