@@ -108,48 +108,62 @@ An optional Grafana instance (`docker-compose up -d grafana`, http://localhost:3
 ## Project Structure
 
 ```
-sharknet/
-├── server/                 # Backend (Node.js/Express)
-│   ├── routes/            # API routes
-│   ├── services/          # Business logic
-│   ├── models/            # Database models
-│   ├── middleware/        # Authentication, etc.
+Apex/
+├── package.json           # Single root manifest (frontend + backend deps)
+├── vite.config.js         # Vite dev server (port 5173) + /api and /ws proxy
+├── index.html             # Frontend entry point
+├── server/                # Backend (Node.js/Express, ES modules)
+│   ├── routes/            # API routes (auth, weather, odin, tactical,
+│   │                      #   messages, analytics, supply, aar)
+│   ├── analytics/         # Real-time KPI/BDA/heatmap engine
+│   ├── supply/            # Supply chain forecasting and routing
+│   ├── aar/               # After-action review, reports and AI analysis
+│   ├── comms/             # Comms/messaging store
+│   ├── db/                # PostgreSQL models, connection, cache
+│   ├── websocket/         # WebSocket server (ws)
 │   └── index.js           # Server entry point
-├── client/                # Frontend (React/Vue)
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API clients
-│   │   └── App.jsx        # Root component
-│   └── vite.config.js
-├── docs/                  # Documentation
+├── src/                   # Frontend (React + JSX, built by Vite)
+│   ├── components/        # Map, Analytics, Supply, AAR, comms panels
+│   ├── pages/             # Page components (Dashboard, etc.)
+│   ├── hooks/             # Data hooks
+│   └── App.jsx            # Root component
+├── grafana/               # Grafana provisioning and dashboards
 ├── docker-compose.yml     # Docker orchestration
-├── package.json
 └── README.md
 ```
 
+> **Note:** This is a single-root project. There is no `server/package.json` or
+> `client/package.json` - run all `npm` commands from the repository root.
+
 ## Development
+
+All dependencies (frontend and backend) live in the root `package.json`, so a
+single install from the repository root covers both.
+
+```bash
+# Install everything once, from the repository root
+npm install
+```
 
 ### Backend Development
 
 ```bash
-# Install dependencies
-cd server
-npm install
-
-# Start development server
-npm run dev
+# Start the Express API + WebSocket server on http://localhost:3000
+npm run server
 ```
 
 ### Frontend Development
 
 ```bash
-# Install dependencies
-cd client
-npm install
-
-# Start Vite development server
+# Start the Vite dev server on http://localhost:5173 (proxies /api and /ws)
 npm run dev
+```
+
+### Lint & Test
+
+```bash
+npm run lint
+npm test
 ```
 
 ## Configuration
