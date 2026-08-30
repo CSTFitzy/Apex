@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import TacticalMap from './components/TacticalMap'
 import { AnalysisStatsPanel, DrawingToolsPanel } from './components/MapTools'
 import WeatherPanel from './components/WeatherPanel'
@@ -6,8 +6,12 @@ import TerrainPanel from './components/TerrainPanel'
 import DocumentsPanel from './components/DocumentsPanel'
 import EnemyPanel from './components/EnemyPanel'
 import SimulationPanel from './components/SimulationPanel'
+import PredictionPanel from './components/PredictionPanel'
+import Cesium3DView from './components/Cesium3DView'
 import api from './api/client'
 import { buildAO, rectangleVertices } from './utils/geometry'
+import { pushHistory } from './utils/prediction'
+import { usePredictions } from './hooks/usePredictions'
 import type {
   AOBounds,
   AreaOfOperations,
@@ -22,7 +26,7 @@ import type {
 } from './types'
 import './App.css'
 
-type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation'
+type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions'
 
 /** Observer eye height above ground level used by the LOS visibility tool. */
 const OBSERVER_HEIGHT_M = 1.5
@@ -58,6 +62,27 @@ function App() {
   const [docResult, setDocResult] = useState<DocumentUploadResult | null>(null)
   const [counterPlan, setCounterPlan] = useState<CounterPlanResult | null>(null)
   const [units, setUnits] = useState<TacticalUnit[]>([])
+  const [unitHistory, setUnitHistory] = useState<Record<string, LatLon[]>>({})
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+
+  // Track a bounded position history per unit so the AI prediction models have
+  // recent movement to extrapolate from (updates whenever unit positions change).
+  const historyRef = useRef<Record<string, LatLon[]>>({})
+  useEffect(() => {
+    const next = { ...historyRef.current }
+    for (const unit of units) {
+      next[unit.id] = pushHistory(next[unit.id] ?? [], unit.position)
+    }
+    historyRef.current = next
+    setUnitHistory(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [units])
+
+  const { predictions, loading: predictionsLoading, error: predictionsError } = usePredictions(
+    units,
+    unitHistory,
+    counterPlan
+  )
 
   const aoBounds = ao?.bounds ?? null
   const aoCenter = ao?.center ?? null
@@ -148,35 +173,54 @@ function App() {
           <button className={`nav-btn ${activeTab === 'simulation' ? 'active' : ''}`} onClick={() => setActiveTab('simulation')}>
             Simulation
           </button>
+          <button className={`nav-btn ${activeTab === 'predictions' ? 'active' : ''}`} onClick={() => setActiveTab('predictions')}>
+            AI Predictions
+          </button>
         </nav>
       </header>
 
       <div className="app-content">
         <main className="map-main">
-          <TacticalMap
-            center={aoCenter ?? mapCenter}
-            ao={ao}
-            drawMode={drawMode}
-            onAOChange={setAO}
-            onDrawModeChange={setDrawMode}
-            observers={observers}
-            onLosDraft={handleLosDraft}
-            onLosCommit={handleLosCommit}
-            spotHeights={spotHeights}
-            losPoints={losPoints}
-            onMapClick={handleMapClick}
-            units={units}
-            viewshed={viewshed}
-          />
-          <DrawingToolsPanel
-            drawMode={drawMode}
-            onDrawModeChange={setDrawMode}
-            hasAO={ao !== null}
-            onClearAO={() => setAO(null)}
-            observerCount={observers.length}
-            onClearObservers={() => setObservers([])}
-          />
-          <AnalysisStatsPanel ao={ao} observers={observers} />
+          <button
+            className="view-toggle-btn"
+            onClick={() => setViewMode((m) => (m === '2d' ? '3d' : '2d'))}
+            title="Switch between 2D map and 3D globe view"
+          >
+            {viewMode === '2d' ? '🌍 Switch to 3D Globe' : '🗺️ Switch to 2D Map'}
+          </button>
+          {viewMode === '2d' ? (
+            <TacticalMap
+              center={aoCenter ?? mapCenter}
+              ao={ao}
+              drawMode={drawMode}
+              onAOChange={setAO}
+              onDrawModeChange={setDrawMode}
+              observers={observers}
+              onLosDraft={handleLosDraft}
+              onLosCommit={handleLosCommit}
+              spotHeights={spotHeights}
+              losPoints={losPoints}
+              onMapClick={handleMapClick}
+              units={units}
+              viewshed={viewshed}
+              predictions={predictions}
+            />
+          ) : (
+            <Cesium3DView center={aoCenter ?? mapCenter} ao={ao} observers={observers} units={units} />
+          )}
+          {viewMode === '2d' && (
+            <>
+              <DrawingToolsPanel
+                drawMode={drawMode}
+                onDrawModeChange={setDrawMode}
+                hasAO={ao !== null}
+                onClearAO={() => setAO(null)}
+                observerCount={observers.length}
+                onClearObservers={() => setObservers([])}
+              />
+              <AnalysisStatsPanel ao={ao} observers={observers} />
+            </>
+          )}
         </main>
 
         <aside className="side-panel">
@@ -198,12 +242,27 @@ function App() {
           {activeTab === 'enemy' && (
             <EnemyPanel docResult={docResult} terrainSummary={terrainSummary} onCounterPlan={setCounterPlan} />
           )}
-          {activeTab === 'simulation' && (
+          {/*
+            The simulation panel stays mounted (just hidden) rather than being
+            conditionally rendered, so its tick loop - and therefore unit
+            movement history - keeps running while the user views other tabs
+            (e.g. AI Predictions), instead of pausing whenever the tab is
+            switched away from "Simulation".
+          */}
+          <div className={activeTab === 'simulation' ? undefined : 'tab-hidden'}>
             <SimulationPanel
               aoCenter={aoCenter}
               units={units}
               onUnitsChange={setUnits}
               counterPlan={counterPlan}
+            />
+          </div>
+          {activeTab === 'predictions' && (
+            <PredictionPanel
+              units={units}
+              predictions={predictions}
+              loading={predictionsLoading}
+              error={predictionsError}
             />
           )}
         </aside>
