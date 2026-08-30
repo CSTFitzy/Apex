@@ -344,7 +344,7 @@ export class CommsStore {
 
   // ---------------------------------------------------------------- presence
 
-  setPresence(unitId: string, callsign: string, online: boolean): PresenceRecord {
+  setPresence(unitId: string, callsign: string, online: boolean, publicKey?: string | null): PresenceRecord {
     const existing = this.presence.get(unitId);
     const record: PresenceRecord = {
       unitId,
@@ -352,6 +352,7 @@ export class CommsStore {
       online,
       lastSeen: new Date().toISOString(),
       channelId: existing?.channelId ?? null,
+      publicKey: publicKey ?? existing?.publicKey ?? null,
     };
     this.presence.set(unitId, record);
     const redis = this.readyRedis();

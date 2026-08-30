@@ -34,7 +34,7 @@ export function registerCommsGateway(io: SocketIOServer): void {
   ioRef = io;
   io.on('connection', (socket: Socket) => {
     /** Authenticates the socket. Every other comms event requires this first. */
-    socket.on('comms:identify', async (payload: { token?: string }, ack?: (res: unknown) => void) => {
+    socket.on('comms:identify', async (payload: { token?: string; publicKey?: string }, ack?: (res: unknown) => void) => {
       const identity = verifyToken(payload?.token);
       if (!identity) {
         ack?.({ ok: false, error: 'Authentication required' });
@@ -42,7 +42,7 @@ export function registerCommsGateway(io: SocketIOServer): void {
       }
       sockets.set(socket.id, { identity });
       socket.join(unitRoom(identity.unitId));
-      const presence = commsStore.setPresence(identity.unitId, identity.callsign, true);
+      const presence = commsStore.setPresence(identity.unitId, identity.callsign, true, payload?.publicKey);
       io.emit('presence:update', presence);
 
       // Deliver anything that queued up while the unit was offline.

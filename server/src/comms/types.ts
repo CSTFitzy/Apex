@@ -84,6 +84,12 @@ export interface PresenceRecord {
   online: boolean;
   lastSeen: string;
   channelId: string | null;
+  /**
+   * Base64 SPKI ECDH public key published by the unit. Peers use it to derive a
+   * shared session key so message bodies can be encrypted end-to-end; the
+   * server only ever relays this public material.
+   */
+  publicKey?: string | null;
 }
 
 export interface AuditEntry {
