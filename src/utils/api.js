@@ -67,6 +67,40 @@ async function request(path, options = {}) {
   return body;
 }
 
+/**
+ * Perform an authenticated request and return the raw response text along
+ * with its content type, for endpoints that may respond with non-JSON
+ * bodies (e.g. AAR CSV/HTML report export).
+ */
+async function requestText(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: buildAuthHeader(token) } : {}),
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const contentType = response.headers.get('content-type') || '';
+  const text = await response.text();
+
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`;
+    if (contentType.includes('application/json')) {
+      try {
+        message = JSON.parse(text).error || message;
+      } catch {
+        // fall through to default message
+      }
+    }
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+
+  return { contentType, body: text };
+}
+
 export const api = {
   get: (path) => request(path, { method: 'GET' }),
   post: (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
@@ -102,6 +136,30 @@ export const api = {
   transferSupply: (payload) =>
     request('/supply/transfer', { method: 'POST', body: JSON.stringify(payload) }),
 
+  // After-Action Review (AAR).
+  startAAROperation: (meta) => request('/aar/operations', { method: 'POST', body: JSON.stringify(meta) }),
+  listAAROperations: () => request('/aar/operations'),
+  getAAROperation: (id) => request(`/aar/operations/${id}`),
+  recordAARFrame: (operationId, units) =>
+    request('/aar/frame', { method: 'POST', body: JSON.stringify({ operationId, units }) }),
+  recordAAREvent: (operationId, event) =>
+    request('/aar/events', { method: 'POST', body: JSON.stringify({ operationId, ...event }) }),
+  addAARBookmark: (operationId, bookmark) =>
+    request(`/aar/operations/${operationId}/bookmarks`, { method: 'POST', body: JSON.stringify(bookmark) }),
+  endAAROperation: (operationId) =>
+    request(`/aar/operations/${operationId}/end`, { method: 'POST', body: JSON.stringify({}) }),
+  getAARAnalytics: (operationId) => request(`/aar/operations/${operationId}/analytics`),
+  getAARLessons: (operationId, query) =>
+    request(`/aar/operations/${operationId}/lessons${query ? `?q=${encodeURIComponent(query)}` : ''}`),
+  getAARComparison: (operationId, withOperationId) =>
+    request(`/aar/operations/${operationId}/comparison?with=${encodeURIComponent(withOperationId)}`),
+  generateAARTraining: (operationId, difficulty) =>
+    request(`/aar/operations/${operationId}/training`, { method: 'POST', body: JSON.stringify({ difficulty }) }),
+  getAARAIAnalysis: (operationId, forceRefresh = false) =>
+    request(`/aar/operations/${operationId}/ai-analysis`, { method: 'POST', body: JSON.stringify({ forceRefresh }) }),
+  getAARAIStatus: () => request('/aar/ai-status'),
+  exportAARReport: (operationId, format = 'json') =>
+    requestText('/aar/export', { method: 'POST', body: JSON.stringify({ operationId, format }) }),
 };
 
 export default api;

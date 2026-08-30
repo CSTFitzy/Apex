@@ -625,3 +625,75 @@ label {
     grid-column: auto;
   }
 }
+
+/* -------------------------------------------------------------------- */
+/* After-Action Review (AAR)                                             */
+/* -------------------------------------------------------------------- */
+
+.aar-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.aar-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.aar-panel-error {
+  color: var(--color-danger);
+}
+
+.aar-panel-hint {
+  color: var(--color-muted);
+}
+
+.aar-replay-controls,
+.aar-bookmark-controls,
+.aar-lessons-search,
+.aar-comparison-controls,
+.aar-training-controls,
+.aar-reports,
+.simulation-aar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  flex-wrap: wrap;
+}
+
+.aar-bookmark-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.kpi-card-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.aar-lessons-category ul {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.aar-lesson-severity-critical {
+  color: var(--color-danger);
+}
+
+.aar-lesson-severity-warning {
+  color: #c98a1d;
+}
+
+.aar-lesson-severity-positive {
+  color: #2f9e44;
+}

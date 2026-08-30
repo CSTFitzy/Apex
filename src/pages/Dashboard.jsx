@@ -9,6 +9,7 @@ import AnalyticsPanel from '../components/AnalyticsPanel.jsx';
 import CommunicationsPanel from '../components/comms/CommunicationsPanel.jsx';
 import SupplyPanel from '../components/SupplyPanel.jsx';
 import LogisticsMap from '../components/LogisticsMap.jsx';
+import AARPanel from '../components/AARPanel.jsx';
 import useSupplyData from '../hooks/useSupplyData.js';
 import api, { setToken } from '../utils/api.js';
 import SharknetSocket from '../utils/websocket.js';
@@ -99,6 +100,13 @@ export default function Dashboard({ onLogout }) {
           >
             Communications
           </button>
+          <button
+            type="button"
+            className={activeTab === 'aar' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('aar')}
+          >
+            After-Action Review
+          </button>
         </nav>
         <button onClick={handleLogout}>Log out</button>
       </header>
@@ -168,6 +176,10 @@ export default function Dashboard({ onLogout }) {
 
       <div className={activeTab === 'comms' ? 'dashboard-comms' : 'tab-hidden'}>
         <CommunicationsPanel />
+      </div>
+
+      <div className={activeTab === 'aar' ? 'dashboard-aar' : 'tab-hidden'}>
+        <AARPanel />
       </div>
     </div>
   );
