@@ -12,6 +12,7 @@ Logo assets (SVG, PNG in 16-512px, and Windows `.ico`) are available in [`assets
 
 - **Tactical Mapping** - ODIN integration with MIL-STD-2525C military symbology
 - **Real-time Collaboration** - Distributed command & control via Matrix protocol
+- **Tactical Comms** - WebRTC push-to-talk radio nets and encrypted real-time messaging
 - **Weather Integration** - Multi-source meteorological data (Open-Meteo, MET Norway, OpenWeatherMap)
 - **OSINT Data** - Open-source intelligence aggregation and analysis
 - **Threat Visualization** - Heatmaps, timeline analysis, equipment tracking
@@ -60,7 +61,102 @@ This build wires the full tactical decision-support workflow together end-to-end
 - **Terrain Analysis** - `GET /api/terrain/spot-heights`, `POST /api/terrain/los`, `POST /api/terrain/viewshed`, `POST /api/terrain/slope` and `POST /api/terrain/report` use free SRTM/Copernicus elevation data (via Open-Meteo's elevation API) to auto-identify key terrain (spot heights), compute line-of-sight between any two points (curvature/refraction corrected), generate a simplified 360° viewshed, and produce a full terrain report with inter-visibility between all spot heights in the AO.
 - **Operational Orders Processing** - `POST /api/documents/upload` accepts PDF/DOCX/TXT orders, extracts text, and runs rule-based NLP to identify coordinates, enemy/friendly force mentions, mission objectives and key terms, then matches the findings against a simulated ODIN-style doctrine database.
 - **Enemy Force Planning** - `POST /api/enemy/counter-plan` combines the matched doctrine profiles with your friendly force disposition to generate a threat assessment (with probability of success) and a counter-plan narrative with recommended actions.
+- **Tactical Communications** - the Comms tab provides a WebRTC push-to-talk radio net (Opus voice, squelch/static, 1-5 bar signal strength derived from distance, terrain, weather and altitude) alongside an encrypted real-time tactical messaging system. See [Tactical Communications](#tactical-communications) below.
 - **Real-Time Simulation** - the Simulation tab renders friendly/hostile units with NATO APP-6D symbology (via `milsymbol`) and lets you Play/Pause real-time unit movement, with automatic engagement resolution and a narration log describing enemy actions.
+
+## Tactical Communications
+
+Phase 2 adds a full military communications platform: WebRTC tactical radio plus
+real-time encrypted messaging, both integrated with the simulation engine.
+
+### Radio nets (WebRTC voice)
+
+- Peer-to-peer mesh audio using the Opus codec, negotiated through a Socket.IO
+  signalling gateway (`webrtc:offer` / `webrtc:answer` / `webrtc:ice-candidate`).
+  ICE servers are served by `GET /api/webrtc/config` (STUN by default; set
+  `TURN_URL`/`TURN_USERNAME`/`TURN_CREDENTIAL` for NAT/firewall traversal).
+- Six default nets are provisioned (Battalion, Company, Platoon, Fires, Medical
+  and an unencrypted Guard net). Stations join, leave and switch nets, and the
+  channel directory shows membership, status (IDLE / BUSY / COMPROMISED) and the
+  active speaker.
+- Half-duplex push-to-talk: the server grants the net to one transmitter at a
+  time. The receiving end applies synthesised squelch/static scaled to the
+  measured link quality.
+- `POST /api/comms/signal` evaluates link quality from distance, terrain
+  obstruction, precipitation/humidity, altitude difference and co-channel
+  interference, returning signal bars, an EXCELLENT/GOOD/FAIR/POOR/LOST rating
+  and an intercept-risk score used to warn about hostile SIGINT.
+- Every transmission is recorded to a voice log (speaker, timestamp, duration,
+  quality) for after-action replay and export.
+
+### Tactical messaging
+
+- Five structured message templates - Intel Report, Order, Casualty Report
+  (CASREP), Support Request and Situation Report - plus free-form messages, each
+  with a ROUTINE / PRIORITY / IMMEDIATE / FLASH precedence.
+- Real-time delivery over Socket.IO with typing indicators, delivery and read
+  receipts, unread badges, offline queuing and mandatory acknowledgement for
+  IMMEDIATE and FLASH traffic.
+- Filtering, keyword search, sorting and CSV/JSON export of the message log.
+- Direct, broadcast and net-wide addressing, with role-based access control
+  (COMMANDER / OFFICER / OPERATOR) enforced on message types.
+
+### Security
+
+- Messages are sealed with AES-256-GCM at rest using a rotating HKDF keyring
+  (`COMMS_ENCRYPTION_KEY`, rotated every `COMMS_KEY_ROTATION_MS`) and carry an
+  HMAC signature so tampering is detectable via `GET /api/messages/:id`.
+- Direct messages are additionally end-to-end encrypted in the browser using
+  WebCrypto ECDH (P-256) + AES-256-GCM, so the server only ever stores
+  ciphertext.
+- Stations authenticate via `POST /api/comms/auth` (JWT) before joining a net,
+  and every send/read/acknowledge action is written to an audit trail
+  (`GET /api/comms/audit`).
+
+### API surface
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/comms/auth` | Issue a comms token for a callsign/role |
+| `GET/POST /api/comms/channels` | List or create radio nets |
+| `POST /api/comms/channels/:id/join`, `/leave` | Net membership |
+| `GET /api/comms/presence` | Online/offline station roster |
+| `POST /api/comms/signal` | Evaluate radio link quality |
+| `GET/POST /api/comms/voice-logs` | Voice log retrieval and recording |
+| `GET /api/comms/voice-logs/export` | Export radio traffic transcripts |
+| `GET /api/comms/audit` | Communications audit trail |
+| `GET /api/comms/keys`, `POST /api/comms/keys/rotate` | Key management |
+| `GET /api/messages/templates` | Structured message templates |
+| `GET /api/messages` | Filter/search/sort the message log |
+| `GET /api/messages/export` | CSV/JSON export |
+| `POST /api/messages` | Send a message |
+| `PUT /api/messages/:id/read`, `POST /api/messages/:id/ack` | Receipts |
+| `GET /api/webrtc/config` | ICE servers and audio constraints |
+| `POST /api/webrtc/signal` | HTTP signalling fallback |
+
+Socket.IO events: `comms:identify`, `channel:join`, `channel:leave`,
+`channel:ptt`, `voice:log`, `message:send`, `message:read`, `message:ack`,
+`typing:indicator`, `comms:heartbeat`, `webrtc:offer`, `webrtc:answer`,
+`webrtc:ice-candidate`.
+
+### Persistence
+
+Comms state is authoritative in memory so the system runs with no external
+services. When PostgreSQL is configured, messages, radio channels, voice logs
+and the audit trail are written through to `messages`, `radio_channels`,
+`voice_logs` and `comms_audit` (created automatically on boot). When Redis is
+available it is used for presence, channel state, the offline message queue and
+per-station rate limiting. Retention is configurable via
+`COMMS_RETENTION_DAYS`.
+
+### Simulation integration
+
+Combat events raise automatic radio traffic (contact reports, CASREPs, and FLASH
+SITREPs when a unit becomes combat ineffective), and inbound messages drive the
+simulation: an intel report containing a grid reference spawns a hostile
+contact, a CASREP attrits the named unit, and a withdraw/retreat order changes
+that unit's behaviour. Transmitting stations are drawn on the tactical map with
+a signal-coverage circle.
 
 ## Architecture
 

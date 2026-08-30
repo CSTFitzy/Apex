@@ -4,6 +4,8 @@ import type { AreaOfOperations, WeatherData } from '../types';
 
 interface Props {
   ao: AreaOfOperations | null;
+  /** Shares the fetched forecast so other panels (e.g. comms) can use it. */
+  onWeather?: (weather: WeatherData | null) => void;
 }
 
 const impactColor: Record<string, string> = {
@@ -13,7 +15,7 @@ const impactColor: Record<string, string> = {
   SEVERE: '#e74c3c',
 };
 
-export default function WeatherPanel({ ao }: Props) {
+export default function WeatherPanel({ ao, onWeather }: Props) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export default function WeatherPanel({ ao }: Props) {
         params: { lat: aoLat, lon: aoLon },
       });
       setWeather(data);
+      onWeather?.(data);
     } catch (err) {
       console.error(err);
       setError('Failed to fetch weather data. The Open-Meteo API may be unreachable.');
