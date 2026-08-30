@@ -7,6 +7,7 @@ import DocumentsPanel from './components/DocumentsPanel'
 import EnemyPanel from './components/EnemyPanel'
 import SimulationPanel from './components/SimulationPanel'
 import PredictionPanel from './components/PredictionPanel'
+import AARPanel from './components/aar/AARPanel'
 import Cesium3DView from './components/Cesium3DView'
 import api from './api/client'
 import { buildAO, rectangleVertices } from './utils/geometry'
@@ -26,7 +27,7 @@ import type {
 } from './types'
 import './App.css'
 
-type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions'
+type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation' | 'predictions' | 'aar'
 
 /** Observer eye height above ground level used by the LOS visibility tool. */
 const OBSERVER_HEIGHT_M = 1.5
@@ -64,6 +65,7 @@ function App() {
   const [units, setUnits] = useState<TacticalUnit[]>([])
   const [unitHistory, setUnitHistory] = useState<Record<string, LatLon[]>>({})
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+  const [latestAAROperationId, setLatestAAROperationId] = useState<string | null>(null)
 
   // Track a bounded position history per unit so the AI prediction models have
   // recent movement to extrapolate from (updates whenever unit positions change).
@@ -176,6 +178,9 @@ function App() {
           <button className={`nav-btn ${activeTab === 'predictions' ? 'active' : ''}`} onClick={() => setActiveTab('predictions')}>
             AI Predictions
           </button>
+          <button className={`nav-btn ${activeTab === 'aar' ? 'active' : ''}`} onClick={() => setActiveTab('aar')}>
+            After-Action Review
+          </button>
         </nav>
       </header>
 
@@ -255,6 +260,7 @@ function App() {
               units={units}
               onUnitsChange={setUnits}
               counterPlan={counterPlan}
+              onOperationRecorded={setLatestAAROperationId}
             />
           </div>
           {activeTab === 'predictions' && (
@@ -265,6 +271,7 @@ function App() {
               error={predictionsError}
             />
           )}
+          {activeTab === 'aar' && <AARPanel latestOperationId={latestAAROperationId} />}
         </aside>
       </div>
     </div>

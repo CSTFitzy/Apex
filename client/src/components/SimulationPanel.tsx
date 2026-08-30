@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
+import type { AAREvent, CounterPlanResult, LatLon, SimulationEvent, TacticalUnit } from '../types';
+import { endOperation, recordFrame, startOperation } from '../api/aar';
 
 interface Props {
   aoCenter: LatLon | null;
   units: TacticalUnit[];
   onUnitsChange: (units: TacticalUnit[]) => void;
   counterPlan: CounterPlanResult | null;
+  /** Called whenever the running simulation is recorded to the AAR system, so the AAR panel can select it. */
+  onOperationRecorded?: (operationId: string) => void;
+}
+
+/** Classifies a narration log message into an AAR event type for after-action analysis. */
+function classifyEvent(message: string): AAREvent['type'] {
+  if (message.startsWith('CONTACT')) return 'contact';
+  if (message.includes('Objective')) return 'objective';
+  if (message.includes('advance') || message.includes('Simulation initialized')) return 'movement';
+  return 'other';
 }
 
 const TICK_MS = 1000;
@@ -49,12 +60,15 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
   ];
 }
 
-export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan }: Props) {
+export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan, onOperationRecorded }: Props) {
   const [running, setRunning] = useState(false);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
+  const [operationId, setOperationId] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const unitsRef = useRef(units);
   unitsRef.current = units;
+  const operationIdRef = useRef<string | null>(null);
+  operationIdRef.current = operationId;
 
   const log = useCallback((message: string) => {
     setEvents((prev) => [{ timestamp: Date.now(), message }, ...prev].slice(0, 50));
@@ -66,11 +80,32 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
     onUnitsChange(defaults);
     setEvents([]);
     log('Simulation initialized: friendly and enemy forces deployed to start positions.');
+    startOperation('Live Simulation', defaults)
+      .then((op) => {
+        setOperationId(op.id);
+        onOperationRecorded?.(op.id);
+      })
+      .catch(() => {
+        // AAR recording is best-effort; the simulation itself must not be blocked by it.
+      });
+  };
+
+  const finalizeOperation = () => {
+    if (!operationId) return;
+    endOperation(operationId).catch(() => undefined);
+    log('Operation finalized and saved to After-Action Review.');
+    setOperationId(null);
   };
 
   const tick = useCallback(() => {
     const current = unitsRef.current;
     if (current.length === 0) return;
+
+    const tickMessages: string[] = [];
+    const logAndTrack = (message: string) => {
+      tickMessages.push(message);
+      log(message);
+    };
 
     const next = current.map((unit) => {
       if (unit.status !== 'active' || unit.route.length === 0) return unit;
@@ -104,7 +139,7 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           if (next[hostileIdx].strength === 0) next[hostileIdx].status = 'destroyed';
 
           const tactic = counterPlan?.matchedDoctrine[0]?.tactics[0];
-          log(
+          logAndTrack(
             `CONTACT: ${friendly.name} engaged ${hostile.name}. ` +
               `${hostile.name} suffered ${hostileDamage} casualties, ${friendly.name} suffered ${friendlyDamage} casualties.` +
               (tactic ? ` Enemy is executing doctrine: "${tactic}".` : '')
@@ -121,12 +156,33 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
           const action = counterPlan?.matchedDoctrine[0]?.tactics[
             Math.floor(Math.random() * (counterPlan?.matchedDoctrine[0]?.tactics.length || 1))
           ];
-          log(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
+          logAndTrack(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
         }
       }
     }
 
     onUnitsChange(next);
+
+    const opId = operationIdRef.current;
+    if (opId) {
+      const frameEvents: AAREvent[] = tickMessages.map((message) => ({
+        timestamp: Date.now(),
+        message,
+        type: classifyEvent(message),
+      }));
+      recordFrame(
+        opId,
+        next.map((u) => ({
+          id: u.id,
+          name: u.name,
+          affiliation: u.affiliation,
+          position: u.position,
+          status: u.status,
+          strength: u.strength,
+        })),
+        frameEvents
+      ).catch(() => undefined);
+    }
   }, [counterPlan, log, onUnitsChange]);
 
   const togglePlay = () => {
@@ -161,7 +217,11 @@ export default function SimulationPanel({ aoCenter, units, onUnitsChange, counte
         <button className="action-btn play-btn" onClick={togglePlay} disabled={units.length === 0}>
           {running ? '⏸ Pause' : '▶ Play'}
         </button>
+        <button className="action-btn" onClick={finalizeOperation} disabled={!operationId}>
+          🏁 Finalize &amp; Save to AAR
+        </button>
       </div>
+      {operationId && <p className="hint-text">Recording to After-Action Review (operation {operationId.slice(0, 8)})…</p>}
       {!aoCenter && <p className="hint-text">Define an operational area first to deploy forces.</p>}
 
       <div className="unit-status-list">

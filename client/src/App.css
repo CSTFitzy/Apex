@@ -898,3 +898,182 @@
   gap: 6px;
   margin-top: 8px;
 }
+
+/* --- After-Action Review (AAR) ------------------------------------------- */
+
+.aar-operation-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.aar-operation-select select {
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.aar-subtab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.aar-subtab-nav .nav-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.aar-replay,
+.aar-analytics,
+.aar-lessons,
+.aar-comparison,
+.aar-training,
+.aar-report-export {
+  background-color: #1a2940;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+}
+
+.aar-scrubber {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+}
+
+.aar-scrubber input[type='range'] {
+  width: 100%;
+}
+
+.aar-bookmark-controls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.aar-bookmark-controls input {
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  flex: 1;
+}
+
+.aar-bookmark-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px 0;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #00b4d8;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 0;
+  text-decoration: underline;
+}
+
+.unit-casualty {
+  opacity: 0.6;
+}
+
+.speed-select select {
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.commander-score-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.score-item {
+  background-color: #0f1423;
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.score-item strong {
+  color: #00b4d8;
+  font-size: 16px;
+}
+
+.aar-lessons input {
+  width: 100%;
+  background-color: #0f1423;
+  border: 1px solid #00b4d8;
+  color: #e0e0e0;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.lesson-category h4 {
+  color: #00b4d8;
+  margin: 10px 0 4px 0;
+}
+
+.lesson-category ul {
+  list-style: none;
+  padding: 0;
+}
+
+.lesson-category li {
+  background-color: #0f1423;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 6px;
+}
+
+.lesson-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background-color: #2d3e50;
+  margin-left: 6px;
+}
+
+.lesson-severity-high .lesson-badge {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+.lesson-severity-medium .lesson-badge {
+  background-color: #f1c40f;
+  color: #0a0e27;
+}
+
+.operation-select-list {
+  list-style: none;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.training-scenario-result {
+  margin-top: 12px;
+}
