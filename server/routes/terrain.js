@@ -40,7 +40,10 @@ function parseAoo(query) {
     return { error: `radius must be a number between 0 and ${MAX_RADIUS_KM} (km)` };
   }
 
-  const name = typeof query.name === 'string' ? query.name.slice(0, 120) : undefined;
+  const rawName = typeof query.name === 'string' ? query.name : '';
+  // The AOO name is echoed back in the generated report, so restrict it to
+  // safe label characters rather than reflecting arbitrary input.
+  const name = rawName.replace(/[^\w\s.,'/-]/g, '').trim().slice(0, 120) || undefined;
   return { latitude: Number(lat), longitude: Number(lon), radiusKm: radius, name };
 }
 
@@ -106,6 +109,8 @@ router.get('/report', requireAuth, async (req, res) => {
       return res.json({ generatedAt, terrain, weather, report });
     }
 
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Disposition', 'attachment; filename="terrain-weather-report.txt"');
     res.type('text/plain').send(report);
     return undefined;
   } catch (err) {
