@@ -16,12 +16,14 @@ import rateLimit from 'express-rate-limit';
 import { pool, checkConnection } from './db/connection.js';
 import { initSchema } from './db/models.js';
 import { registerWebSocketHandlers } from './websocket/handlers.js';
+import { createCommsGateway } from './comms/gateway.js';
 import { logger } from './utils/logger.js';
 
 import authRoutes from './routes/auth.js';
 import odinRoutes from './routes/odin.js';
 import weatherRoutes from './routes/weather.js';
 import tacticalRoutes from './routes/tactical.js';
+import commsRoutes from './routes/comms.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -114,6 +116,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/odin', odinRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/tactical', tacticalRoutes);
+app.use('/api/comms', commsRoutes);
 
 /* ------------------------------------------------------------------ */
 /* 404 + error handling                                                 */
@@ -137,6 +140,7 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 registerWebSocketHandlers(wss);
+const io = createCommsGateway(server, { corsOrigins: configuredOrigins });
 
 async function start() {
   try {
@@ -169,4 +173,4 @@ process.on('SIGTERM', async () => {
   server.close(() => process.exit(0));
 });
 
-export { app, server, wss };
+export { app, server, wss, io };

@@ -4,6 +4,7 @@ import Map from '../components/Map.jsx';
 import WeatherWidget from '../components/WeatherWidget.jsx';
 import IntelligencePanel from '../components/IntelligencePanel.jsx';
 import AnalysisChart from '../components/AnalysisChart.jsx';
+import CommsPanel from '../components/CommsPanel.jsx';
 import api, { setToken } from '../utils/api.js';
 import SharknetSocket from '../utils/websocket.js';
 
@@ -67,6 +68,7 @@ export default function Dashboard({ onLogout }) {
         <aside className="dashboard-sidebar">
           <WeatherWidget latitude={selected?.latitude} longitude={selected?.longitude} />
           <IntelligencePanel />
+          <CommsPanel />
         </aside>
 
         <section className="dashboard-analysis">
