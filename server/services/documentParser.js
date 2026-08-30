@@ -1,9 +1,14 @@
 import { readFile } from 'fs/promises';
-import { extname } from 'path';
+import path, { extname } from 'path';
 import { PDFParse } from 'pdf-parse';
 import * as mammoth from 'mammoth';
 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png']);
+const DOCUMENT_UPLOAD_DIR = path.resolve(process.cwd(), 'server/uploads/documents');
+
+export function resolveStoredDocumentPath(filePath) {
+  return path.join(DOCUMENT_UPLOAD_DIR, path.basename(filePath));
+}
 
 export function normalizeFileType(filename = '', mimeType = '') {
   const extension = extname(filename).toLowerCase();
@@ -24,17 +29,18 @@ export function isAllowedDocumentType(filename, mimeType) {
 }
 
 export async function extractTextFromDocument(filePath, fileType) {
+  const safePath = resolveStoredDocumentPath(filePath);
   if (fileType === 'txt') {
-    return readFile(filePath, 'utf8');
+    return readFile(safePath, 'utf8');
   }
 
   if (fileType === 'docx') {
-    const result = await mammoth.extractRawText({ path: filePath });
+    const result = await mammoth.extractRawText({ path: safePath });
     return result.value || '';
   }
 
   if (fileType === 'pdf') {
-    const buffer = await readFile(filePath);
+    const buffer = await readFile(safePath);
     const parser = new PDFParse({ data: buffer });
     try {
       const result = await parser.getText();

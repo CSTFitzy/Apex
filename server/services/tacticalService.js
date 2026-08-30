@@ -1,7 +1,12 @@
 import { createHash } from 'crypto';
 import { readFile } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
-import { buildPreview, extractTextFromDocument, normalizeFileType } from './documentParser.js';
+import {
+  buildPreview,
+  extractTextFromDocument,
+  normalizeFileType,
+  resolveStoredDocumentPath,
+} from './documentParser.js';
 
 export const UNIT_TYPES = ['infantry', 'armor', 'artillery', 'air', 'naval', 'support'];
 export const AFFILIATIONS = ['friendly', 'enemy', 'neutral'];
@@ -158,7 +163,8 @@ export function exportMarkupGeoJson(scenarioId) {
 
 export async function addDocument({ file, scenarioId = 'default', tags = [], uploadedBy = 'unknown' }) {
   const fileType = normalizeFileType(file.originalname, file.mimetype);
-  const buffer = await readFile(file.path);
+  const safePath = resolveStoredDocumentPath(file.path);
+  const buffer = await readFile(safePath);
   const hash = createHash('sha256').update(buffer).digest('hex');
   const normalizedScenarioId = normalizeScenarioId(scenarioId);
   const duplicate = [...documents.values()].find(
@@ -166,13 +172,13 @@ export async function addDocument({ file, scenarioId = 'default', tags = [], upl
   );
   if (duplicate) return { ...duplicate, duplicate: true };
 
-  const extractedText = await extractTextFromDocument(file.path, fileType);
+  const extractedText = await extractTextFromDocument(safePath, fileType);
   const timestamp = nowIso();
   const document = {
     id: uuidv4(),
     scenarioId: normalizedScenarioId,
     filename: file.originalname,
-    filePath: file.path,
+    filePath: safePath,
     fileType,
     fileSize: file.size,
     hash,

@@ -1,5 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'fs/promises';
-import os from 'os';
+import { mkdir, rm, writeFile } from 'fs/promises';
 import path from 'path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -76,8 +75,9 @@ describe('phase 2 tactical services', () => {
   });
 
   it('extracts and searches uploaded text documents with tags', async () => {
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'apex-docs-'));
-    const filePath = path.join(dir, 'enemy.txt');
+    const dir = path.resolve(process.cwd(), 'server/uploads/documents');
+    await mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, `enemy-${Date.now()}.txt`);
     await writeFile(filePath, 'Enemy armored platoon intends to seize Objective Falcon before dawn.');
 
     try {
@@ -100,7 +100,7 @@ describe('phase 2 tactical services', () => {
         filename: 'enemy.txt',
       });
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      await rm(filePath, { force: true });
     }
   });
 
