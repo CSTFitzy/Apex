@@ -85,23 +85,23 @@ export default function createSupplyRouter(pool: pg.Pool, redisClient?: CacheCli
   router.get('/forecast', (req: Request, res: Response) => {
     try {
       const forecast = forecastSupply({
-        unitId: String(req.query.unitId ?? 'demo-unit'),
-        unitName: req.query.unitName ? String(req.query.unitName) : undefined,
-        hours: req.query.hours ? Number(req.query.hours) : 8,
-        combatIntensity: req.query.combatIntensity ? Number(req.query.combatIntensity) : 1,
+        unitId: 'demo-unit',
+        unitName: 'Demonstration Unit',
+        hours: 8,
+        combatIntensity: 1,
         currentInventory: {
-          Ammo: Number(req.query.ammo ?? 1500),
-          Fuel: Number(req.query.fuel ?? 900),
-          Medical: Number(req.query.medical ?? 250),
-          Rations: Number(req.query.rations ?? 1200),
-          Water: Number(req.query.water ?? 1400),
+          Ammo: 1500,
+          Fuel: 900,
+          Medical: 250,
+          Rations: 1200,
+          Water: 1400,
         },
         consumptionRates: {
-          Ammo: Number(req.query.ammoRate ?? 420),
-          Fuel: Number(req.query.fuelRate ?? 140),
-          Medical: Number(req.query.medicalRate ?? 50),
-          Rations: Number(req.query.rationsRate ?? 90),
-          Water: Number(req.query.waterRate ?? 110),
+          Ammo: 420,
+          Fuel: 140,
+          Medical: 50,
+          Rations: 90,
+          Water: 110,
         },
       });
       res.json(forecast);
