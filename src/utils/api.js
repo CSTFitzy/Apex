@@ -63,6 +63,18 @@ export const api = {
   getWeatherForecast: (lat, lon) => request(`/weather/forecast?lat=${lat}&lon=${lon}`),
   getIntelligenceReports: () => request('/odin/reports'),
   getTacticalLocations: () => request('/tactical/locations'),
+
+  // Supply chain / logistics.
+  getSupplyStatus: (windowHours) =>
+    request(`/supply/status${windowHours ? `?window=${windowHours}` : ''}`),
+  getSupplyForecast: (windowHours) =>
+    request(`/supply/forecast${windowHours ? `?window=${windowHours}` : ''}`),
+  getSupplyDepots: () => request('/supply/depots'),
+  getSupplyConsumption: (limit = 200) => request(`/supply/consumption?limit=${limit}`),
+  consumeSupply: (payload) =>
+    request('/supply/consume', { method: 'POST', body: JSON.stringify(payload) }),
+  transferSupply: (payload) =>
+    request('/supply/transfer', { method: 'POST', body: JSON.stringify(payload) }),
 };
 
 export default api;

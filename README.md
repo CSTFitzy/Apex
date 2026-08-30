@@ -11,6 +11,7 @@ Open-source tactical management system utilizing ODIN, military intelligence dat
 - **Weather Integration** - Multi-source meteorological data (Open-Meteo, MET Norway, OpenWeatherMap)
 - **OSINT Data** - Open-source intelligence aggregation and analysis
 - **Threat Visualization** - Heatmaps, timeline analysis, equipment tracking
+- **Supply Chain & Logistics** - Per-unit supply tracking, depletion forecasting, and optimized resupply routing
 - **Offline Operation** - Full self-hosting capability
 - **No Vendor Lock-in** - Complete operational independence
 
@@ -55,6 +56,34 @@ See [API_INTEGRATIONS.md](./API_INTEGRATIONS.md) for code examples and integrati
 - ODIN Command & Control
 - Weather APIs (Open-Meteo, MET Norway, OpenWeatherMap)
 - OSINT Data Sources (Liveuamap, Oryx, ISW)
+
+## Supply Chain & Logistics
+
+Supply state is tracked per unit for four supply classes (ammunition, fuel,
+rations, medical), backed by indexed PostgreSQL tables and an in-process TTL
+cache for the hot unit-roster reads.
+
+| Endpoint | Description |
+| --- | --- |
+| `GET /api/supply/status` | Current levels per unit plus aggregate totals, status and alerts |
+| `POST /api/supply/consume` | Record a consumption event against a unit's stock |
+| `POST /api/supply/transfer` | Transfer supplies unit-to-unit or depot-to-unit |
+| `GET /api/supply/forecast` | Time-to-depletion forecasts, resupply recommendations and routes |
+| `GET /api/supply/depots` | Supply depot locations and on-hand stock |
+| `POST /api/supply/depots` | Register a supply depot |
+| `GET /api/supply/units` | Unit roster, filterable by force/status or map bounding box |
+| `POST /api/supply/units` | Register a unit and seed its supply lines |
+| `GET /api/supply/consumption` | Recent consumption events for the rate graphs |
+
+Forecasts blend each unit's configured consumption rate with the rate actually
+observed over a rolling window (`?window=<hours>`, default 24). Units are
+classified as `critical` / `low` / `adequate` / `full`, and resupply routes are
+planned from the nearest stocked depot using terrain-dependent convoy speeds
+while routing around known enemy contact areas.
+
+Consumption and transfer events are broadcast to subscribed WebSocket clients
+as `SUPPLY_UPDATE` messages (topic `supply`), which drive the dashboard's
+Supply Panel and Logistics Map in real time.
 
 ## Visualization
 

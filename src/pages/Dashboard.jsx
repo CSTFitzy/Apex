@@ -4,6 +4,9 @@ import Map from '../components/Map.jsx';
 import WeatherWidget from '../components/WeatherWidget.jsx';
 import IntelligencePanel from '../components/IntelligencePanel.jsx';
 import AnalysisChart from '../components/AnalysisChart.jsx';
+import SupplyPanel from '../components/SupplyPanel.jsx';
+import LogisticsMap from '../components/LogisticsMap.jsx';
+import useSupplyData from '../hooks/useSupplyData.js';
 import api, { setToken } from '../utils/api.js';
 import SharknetSocket from '../utils/websocket.js';
 
@@ -14,6 +17,7 @@ export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
+  const supply = useSupplyData();
 
   useEffect(() => {
     let cancelled = false;
@@ -67,6 +71,14 @@ export default function Dashboard({ onLogout }) {
         <aside className="dashboard-sidebar">
           <WeatherWidget latitude={selected?.latitude} longitude={selected?.longitude} />
           <IntelligencePanel />
+          <SupplyPanel
+            status={supply.status}
+            forecast={supply.forecast}
+            consumption={supply.consumption}
+            loading={supply.loading}
+            error={supply.error}
+            onRefresh={supply.refresh}
+          />
         </aside>
 
         <section className="dashboard-analysis">
@@ -74,6 +86,15 @@ export default function Dashboard({ onLogout }) {
             title="Activity Trend"
             labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri']}
             datasets={[{ label: 'Reports', data: [3, 5, 2, 8, 4], borderColor: '#2f81f7' }]}
+          />
+        </section>
+
+        <section className="dashboard-logistics">
+          <h2>Logistics</h2>
+          <LogisticsMap
+            depots={supply.depots}
+            units={supply.status?.units || []}
+            routes={supply.forecast?.routes || []}
           />
         </section>
       </div>
