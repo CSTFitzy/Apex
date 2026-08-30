@@ -7,6 +7,9 @@ import AnalysisChart from '../components/AnalysisChart.jsx';
 import SimulationPanel from '../components/SimulationPanel.jsx';
 import AnalyticsPanel from '../components/AnalyticsPanel.jsx';
 import CommunicationsPanel from '../components/comms/CommunicationsPanel.jsx';
+import SupplyPanel from '../components/SupplyPanel.jsx';
+import LogisticsMap from '../components/LogisticsMap.jsx';
+import useSupplyData from '../hooks/useSupplyData.js';
 import api, { setToken } from '../utils/api.js';
 import SharknetSocket from '../utils/websocket.js';
 
@@ -14,6 +17,7 @@ const SIDEBAR_TABS = [
   { id: 'intel', label: 'Intel' },
   { id: 'simulation', label: 'Simulation' },
   { id: 'analytics', label: 'Analytics' },
+  { id: 'supply', label: 'Supply' },
 ];
 
 /**
@@ -28,6 +32,7 @@ export default function Dashboard({ onLogout }) {
   const [simUnits, setSimUnits] = useState([]);
   const [simEvents, setSimEvents] = useState([]);
   const [heatmap, setHeatmap] = useState(null);
+  const supply = useSupplyData();
 
   useEffect(() => {
     let cancelled = false;
@@ -130,6 +135,17 @@ export default function Dashboard({ onLogout }) {
           <div className={sidebarTab === 'analytics' ? '' : 'tab-hidden'}>
             <AnalyticsPanel units={simUnits} events={simEvents} onHeatmapChange={setHeatmap} />
           </div>
+
+          <div className={sidebarTab === 'supply' ? '' : 'tab-hidden'}>
+            <SupplyPanel
+              status={supply.status}
+              forecast={supply.forecast}
+              consumption={supply.consumption}
+              loading={supply.loading}
+              error={supply.error}
+              onRefresh={supply.refresh}
+            />
+          </div>
         </aside>
 
         <section className="dashboard-analysis">
@@ -137,6 +153,15 @@ export default function Dashboard({ onLogout }) {
             title="Activity Trend"
             labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri']}
             datasets={[{ label: 'Reports', data: [3, 5, 2, 8, 4], borderColor: '#2f81f7' }]}
+          />
+        </section>
+
+        <section className="dashboard-logistics">
+          <h2>Logistics</h2>
+          <LogisticsMap
+            depots={supply.depots}
+            units={supply.status?.units || []}
+            routes={supply.forecast?.routes || []}
           />
         </section>
       </div>

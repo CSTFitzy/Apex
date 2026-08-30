@@ -89,6 +89,19 @@ export const api = {
     request(`/messages?conversationId=${encodeURIComponent(conversationId)}`),
   sendMessage: (text, conversationId = 'global') =>
     request('/messages', { method: 'POST', body: JSON.stringify({ text, conversationId }) }),
+
+  // Supply chain / logistics.
+  getSupplyStatus: (windowHours) =>
+    request(`/supply/status${windowHours ? `?window=${windowHours}` : ''}`),
+  getSupplyForecast: (windowHours) =>
+    request(`/supply/forecast${windowHours ? `?window=${windowHours}` : ''}`),
+  getSupplyDepots: () => request('/supply/depots'),
+  getSupplyConsumption: (limit = 200) => request(`/supply/consumption?limit=${limit}`),
+  consumeSupply: (payload) =>
+    request('/supply/consume', { method: 'POST', body: JSON.stringify(payload) }),
+  transferSupply: (payload) =>
+    request('/supply/transfer', { method: 'POST', body: JSON.stringify(payload) }),
+
 };
 
 export default api;

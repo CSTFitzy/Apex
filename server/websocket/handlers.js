@@ -15,6 +15,7 @@ export const MESSAGE_TYPES = {
   MAP_UPDATE: 'MAP_UPDATE',
   WEATHER_ALERT: 'WEATHER_ALERT',
   INTELLIGENCE_UPDATE: 'INTELLIGENCE_UPDATE',
+  SUPPLY_UPDATE: 'SUPPLY_UPDATE',
   ANALYTICS_EVENT: 'ANALYTICS_EVENT',
   SUBSCRIBE: 'SUBSCRIBE',
   ERROR: 'ERROR',
@@ -33,10 +34,24 @@ export const MESSAGE_TYPES = {
 const connectedUsers = new Map();
 
 /**
+ * The most recently registered WebSocket server. Route handlers use this to
+ * push real-time updates without having to import the server entry point
+ * (which would create a circular dependency).
+ */
+let activeServer = null;
+
+/** Return the currently registered WebSocket server, if any. */
+export function getWebSocketServer() {
+  return activeServer;
+}
+
+/**
  * Attach connection/message handling to a `ws` WebSocketServer instance.
  * @param {import('ws').WebSocketServer} wss
  */
 export function registerWebSocketHandlers(wss) {
+  activeServer = wss;
+
   wss.on('connection', (socket, request) => {
     socket.isAlive = true;
     socket.topics = new Set(['all']);
@@ -82,7 +97,10 @@ export function registerWebSocketHandlers(wss) {
     });
   }, 30000);
 
-  wss.on('close', () => clearInterval(interval));
+  wss.on('close', () => {
+    clearInterval(interval);
+    if (activeServer === wss) activeServer = null;
+  });
 }
 
 /**
@@ -301,6 +319,15 @@ export function broadcastWeatherAlert(wss, data) {
 /** Broadcast an intelligence update (new ODIN report, etc). */
 export function broadcastIntelligenceUpdate(wss, data) {
   broadcast(wss, MESSAGE_TYPES.INTELLIGENCE_UPDATE, data, 'intelligence');
+}
+
+/**
+ * Broadcast a supply change (consumption, transfer, or status change).
+ * Defaults to the registered server so route handlers can call it directly.
+ */
+export function broadcastSupplyUpdate(data, wss = activeServer) {
+  if (!wss) return;
+  broadcast(wss, MESSAGE_TYPES.SUPPLY_UPDATE, data, 'supply');
 }
 
 /** Broadcast a tactical analytics event (casualty report, enemy contact, etc). */

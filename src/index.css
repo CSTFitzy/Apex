@@ -386,3 +386,242 @@ label {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+/* ------------------------------------------------------------------ */
+/* Supply chain / logistics                                            */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --color-warning: #d29922;
+  --color-success: #3fb950;
+}
+
+.dashboard-grid {
+  grid-template-rows: 2fr 1fr auto;
+}
+
+.dashboard-sidebar {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.dashboard-logistics {
+  grid-column: 1 / -1;
+}
+
+.supply-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.supply-panel h4 {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.supply-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.supply-panel-header h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.supply-panel-header button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.supply-panel-error {
+  color: var(--color-danger);
+}
+
+.supply-panel-success {
+  color: var(--color-success);
+}
+
+.supply-badge {
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0b0f14;
+  background: var(--color-success);
+}
+
+.supply-badge-critical {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.supply-badge-low {
+  background: var(--color-warning);
+}
+
+.supply-badge-adequate {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.supply-bar-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.supply-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.supply-bar-fill {
+  height: 100%;
+  background: var(--color-success);
+}
+
+.supply-bar-fill-critical {
+  background: var(--color-danger);
+}
+
+.supply-bar-fill-low {
+  background: var(--color-warning);
+}
+
+.supply-bar-fill-adequate {
+  background: var(--color-accent);
+}
+
+.supply-bar-value {
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.supply-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+}
+
+.supply-alert {
+  border-left: 3px solid var(--color-warning);
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.3rem;
+  background: rgba(210, 153, 34, 0.08);
+}
+
+.supply-alert-critical {
+  border-left-color: var(--color-danger);
+  background: rgba(248, 81, 73, 0.1);
+}
+
+.supply-timeline li,
+.supply-unit header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.supply-timeline-unit {
+  flex: 1;
+}
+
+.supply-timeline-eta,
+.supply-unit-callsign {
+  color: var(--color-muted);
+}
+
+.supply-unit {
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.supply-transfer form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.supply-transfer label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.supply-transfer select,
+.supply-transfer input {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.4rem;
+}
+
+.logistics-map-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.logistics-map {
+  width: 100%;
+  height: 320px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.logistics-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.logistics-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.logistics-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .dashboard-map {
+    grid-row: auto;
+    min-height: 320px;
+  }
+
+  .dashboard-logistics {
+    grid-column: auto;
+  }
+}

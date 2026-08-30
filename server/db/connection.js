@@ -36,8 +36,31 @@ export async function query(text, params = []) {
   return result;
 }
 
-/** Verify the database connection is reachable. */
-export async function checkConnection() {
+/**
+ * Run a set of queries inside a single transaction.
+ *
+ * The callback receives a dedicated client; the transaction is committed when
+ * it resolves and rolled back if it throws. Used for multi-row operations such
+ * as supply transfers that must not be partially applied.
+ *
+ * @param {(client: import('pg').PoolClient) => Promise<*>} callback
+ */
+export async function withTransaction(callback) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Verify the database connection is reachable. */export async function checkConnection() {
   try {
     await pool.query('SELECT 1');
     return true;

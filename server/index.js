@@ -22,6 +22,7 @@ import authRoutes from './routes/auth.js';
 import odinRoutes from './routes/odin.js';
 import weatherRoutes from './routes/weather.js';
 import tacticalRoutes from './routes/tactical.js';
+import supplyRoutes from './routes/supply.js';
 import analyticsRoutes from './routes/analytics.js';
 import messagesRoutes from './routes/messages.js';
 
@@ -116,6 +117,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/odin', odinRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/tactical', tacticalRoutes);
+app.use('/api/supply', supplyRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/messages', messagesRoutes);
 
