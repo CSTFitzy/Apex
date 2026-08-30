@@ -10,15 +10,23 @@ import {
   addDocument,
   exportMarkupGeoJson,
   getDocumentPreview,
+  getScenario,
+  listDocumentsForAnalysis,
   listDocuments,
   listMarkupSets,
   listUnits,
   removeDocument,
   removeUnit,
+  saveScenario,
   saveMarkupSet,
   saveUnits,
   searchDocuments,
 } from '../services/tacticalService.js';
+import {
+  analyzeEnemyCoas,
+  generateOpord,
+  recommendCounterMoves,
+} from '../services/tacticalPlanningService.js';
 import { requireAuth } from '../auth/middleware.js';
 import { TacticalLocations, AnalysisSessions } from '../db/models.js';
 import { isValidLatitude, isValidLongitude, getMissingFields } from '../utils/validators.js';
@@ -153,6 +161,62 @@ router.post('/analysis', requireAuth, async (req, res) => {
       ownerId: req.user.id,
       parameters: req.body.parameters,
     });
+
+    router.post('/analyze-enemy-coas', requireAuth, async (req, res) => {
+      const scenarioId = req.body.scenarioId || 'default';
+      const unitsForScenario = listUnits(scenarioId);
+      const documents = Array.isArray(req.body.documents) && req.body.documents.length
+        ? req.body.documents
+        : listDocumentsForAnalysis(scenarioId);
+      const enemyUnits = Array.isArray(req.body.enemyUnits) && req.body.enemyUnits.length
+        ? req.body.enemyUnits
+        : unitsForScenario.filter((unit) => unit.affiliation === 'enemy');
+      const friendlyUnits = Array.isArray(req.body.friendlyUnits) && req.body.friendlyUnits.length
+        ? req.body.friendlyUnits
+        : unitsForScenario.filter((unit) => unit.affiliation === 'friendly');
+
+      try {
+        const result = await analyzeEnemyCoas({
+          documents,
+          enemyUnits,
+          friendlyUnits,
+          terrain: req.body.terrain,
+          weather: req.body.weather,
+        });
+        return res.status(201).json(result);
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    });
+
+    router.post('/recommend-counter-moves', requireAuth, async (req, res) => {
+      const scenarioId = req.body.scenarioId || 'default';
+      const unitsForScenario = listUnits(scenarioId);
+      try {
+        const result = await recommendCounterMoves({
+          selectedCOA: req.body.selectedCOA,
+          friendlyUnits: Array.isArray(req.body.friendlyUnits) && req.body.friendlyUnits.length
+            ? req.body.friendlyUnits
+            : unitsForScenario.filter((unit) => unit.affiliation === 'friendly'),
+          enemyUnits: Array.isArray(req.body.enemyUnits) && req.body.enemyUnits.length
+            ? req.body.enemyUnits
+            : unitsForScenario.filter((unit) => unit.affiliation === 'enemy'),
+          terrain: req.body.terrain,
+        });
+        return res.status(201).json(result);
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    });
+
+    router.post('/generate-opord', requireAuth, async (req, res) => {
+      try {
+        const result = await generateOpord(req.body);
+        return res.status(201).json(result);
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    });
     return res.status(201).json({ session });
   } catch (err) {
     logger.error('Failed to create analysis session', { error: err.message });
@@ -250,6 +314,24 @@ router.get('/documents/:docId/preview', requireAuth, (req, res) => {
 router.delete('/documents/:docId', requireAuth, (req, res) => {
   removeDocument(req.params.docId);
   return res.status(204).send();
+});
+
+router.get('/scenarios/:id', requireAuth, (req, res) => {
+  const scenario = getScenario(req.params.id);
+  if (!scenario) return res.status(404).json({ error: 'Scenario not found' });
+  return res.json({ scenario });
+});
+
+router.post('/scenarios', requireAuth, (req, res) => {
+  try {
+    const scenario = saveScenario({
+      ...req.body,
+      documents: req.body.documents || listDocuments(req.body.id || req.body.scenarioId || 'default'),
+    });
+    return res.status(201).json({ scenario });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 });
 
 export default router;
