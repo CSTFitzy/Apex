@@ -217,7 +217,6 @@ export interface UnitPrediction {
   recommendations: string[];
 }
 
-<<<<<<< HEAD
 // --- After-Action Review (AAR) system -------------------------------------
 
 /** A unit's recorded state at one moment in time - a superset of TacticalUnit. */
@@ -346,7 +345,8 @@ export interface ComparisonResult {
     detail: string;
   }[];
   similarityScorePct: number;
-=======
+}
+
 // ---------------------------------------------------------------------------
 // Tactical communications (WebRTC radio + real-time messaging)
 // ---------------------------------------------------------------------------
@@ -472,5 +472,4 @@ export interface TacticalSimEvent {
   position: LatLon;
   casualties?: number;
   detail: string;
->>>>>>> origin/feature/complete-battle-management-system
 }

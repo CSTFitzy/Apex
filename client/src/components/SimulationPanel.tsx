@@ -69,17 +69,14 @@ function buildDefaultUnits(center: LatLon): TacticalUnit[] {
   ];
 }
 
-<<<<<<< HEAD
-export default function SimulationPanel({ aoCenter, units, onUnitsChange, counterPlan, onOperationRecorded }: Props) {
-=======
 export default function SimulationPanel({
   aoCenter,
   units,
   onUnitsChange,
   counterPlan,
+  onOperationRecorded,
   onTacticalEvent,
 }: Props) {
->>>>>>> origin/feature/complete-battle-management-system
   const [running, setRunning] = useState(false);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -206,10 +203,7 @@ export default function SimulationPanel({
           const action = counterPlan?.matchedDoctrine[0]?.tactics[
             Math.floor(Math.random() * (counterPlan?.matchedDoctrine[0]?.tactics.length || 1))
           ];
-<<<<<<< HEAD
           logAndTrack(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
-=======
-          log(`${unit.name} continues to advance.${action ? ` Assessed intent: ${action}` : ''}`);
           eventSinkRef.current?.({
             kind: 'ADVANCE',
             unitId: unit.id,
@@ -218,7 +212,6 @@ export default function SimulationPanel({
             position: unit.position,
             detail: `${unit.name} continues to advance.`,
           });
->>>>>>> origin/feature/complete-battle-management-system
         }
       }
     }
