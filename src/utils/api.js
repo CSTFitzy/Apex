@@ -130,6 +130,7 @@ export const api = {
   get: (path) => request(path, { method: 'GET' }),
   post: (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
   delete: (path) => request(path, { method: 'DELETE' }),
+  put: (path, data) => request(path, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Convenience wrappers for common endpoints.
   login: (email, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
@@ -183,6 +184,12 @@ export const api = {
     request('/tactical/scenarios', { method: 'POST', body: JSON.stringify(payload) }),
   getTacticalScenario: (scenarioId) =>
     request(`/tactical/scenarios/${encodeURIComponent(scenarioId)}`),
+  listScenarios: (filters = {}) => request(`/scenarios?${new URLSearchParams(filters)}`),
+  createScenario: (payload) => request('/scenarios', { method: 'POST', body: JSON.stringify(payload) }),
+  updateScenario: (id, payload) => request(`/scenarios/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  archiveScenario: (id) => request(`/scenarios/${encodeURIComponent(id)}/archive`, { method: 'POST', body: '{}' }),
+  duplicateScenario: (id, payload = {}) => request(`/scenarios/${encodeURIComponent(id)}/duplicate`, { method: 'POST', body: JSON.stringify(payload) }),
+  getScenarioVersions: (id) => request(`/scenarios/${encodeURIComponent(id)}/versions`),
   getKPIs: (units, events) => request('/analytics/kpis', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getBDA: (units, events) => request('/analytics/bda', { method: 'POST', body: JSON.stringify({ units, events }) }),
   getHeatmap: (units, events, type) =>

@@ -17,6 +17,7 @@ const units = new Map();
 const markupVersions = new Map();
 const documents = new Map();
 const scenarios = new Map();
+const scenarioVersions = new Map();
 
 function nowIso() {
   return new Date().toISOString();
@@ -274,6 +275,11 @@ export function saveScenario(payload) {
   const scenario = {
     id,
     name: String(payload.name || existing?.name || `Scenario ${id}`),
+    description: String(payload.description ?? existing?.description ?? ''),
+    missionType: String(payload.missionType ?? existing?.missionType ?? ''),
+    locationName: String(payload.locationName ?? existing?.locationName ?? ''),
+    status: payload.status || existing?.status || 'Active',
+    tags: normalizeTags(payload.tags ?? existing?.tags),
     aoo: payload.aoo || existing?.aoo || null,
     aooRadiusKm: Number.isFinite(Number(payload.aooRadiusKm)) ? Number(payload.aooRadiusKm) : existing?.aooRadiusKm || 5,
     units: Array.isArray(payload.units) ? payload.units : listUnits(id),
@@ -289,8 +295,19 @@ export function saveScenario(payload) {
     riskAssessment: payload.riskAssessment || existing?.riskAssessment || null,
     createdAt: existing?.createdAt || timestamp,
     updatedAt: timestamp,
+    createdBy: existing?.createdBy || payload.createdBy || null,
+    updatedBy: payload.updatedBy || null,
   };
   scenarios.set(id, scenario);
+  const versions = scenarioVersions.get(id) || [];
+  scenarioVersions.set(id, [{
+    id: uuidv4(),
+    versionNumber: versions.length + 1,
+    snapshot: structuredClone(scenario),
+    createdAt: timestamp,
+    createdBy: scenario.updatedBy,
+    changeSummary: String(payload.changeSummary || (existing ? 'Scenario updated' : 'Scenario created')),
+  }, ...versions]);
   return scenario;
 }
 
@@ -300,9 +317,65 @@ export function getScenario(id) {
   return scenario;
 }
 
+export function listScenarios({ search = '', status, sort = 'updatedAt' } = {}) {
+  const needle = String(search).trim().toLowerCase();
+  const direction = sort === 'name' || sort === 'missionType' ? 1 : -1;
+  return [...scenarios.values()]
+    .filter((scenario) => !status || scenario.status === status)
+    .filter((scenario) => !needle || `${scenario.name} ${scenario.tags.join(' ')}`.toLowerCase().includes(needle))
+    .sort((a, b) => String(a[sort] || '').localeCompare(String(b[sort] || '')) * direction)
+    .map((scenario) => ({ ...scenario, units: undefined, markups: undefined, documents: undefined, coas: undefined }));
+}
+
+export function updateScenario(id, payload) {
+  if (!scenarios.has(normalizeScenarioId(id))) return null;
+  return saveScenario({ ...payload, id });
+}
+
+export function deleteScenario(id) {
+  const scenarioId = normalizeScenarioId(id);
+  scenarioVersions.delete(scenarioId);
+  return scenarios.delete(scenarioId);
+}
+
+export function archiveScenario(id, updatedBy) {
+  return updateScenario(id, { status: 'Archived', updatedBy, changeSummary: 'Scenario archived' });
+}
+
+export function duplicateScenario(id, { name, createdBy } = {}) {
+  const source = getScenario(id);
+  if (!source) return null;
+  const copyId = uuidv4();
+  return saveScenario({
+    ...structuredClone(source),
+    id: copyId,
+    name: name || `${source.name} (Copy)`,
+    status: 'Active',
+    createdBy,
+    updatedBy: createdBy,
+    changeSummary: `Duplicated from ${source.name}`,
+  });
+}
+
+export function listScenarioVersions(id) {
+  return scenarioVersions.get(normalizeScenarioId(id)) || [];
+}
+
+export function restoreScenarioVersion(id, versionId, updatedBy) {
+  const version = listScenarioVersions(id).find((entry) => entry.id === String(versionId));
+  if (!version) return null;
+  return saveScenario({
+    ...structuredClone(version.snapshot),
+    id,
+    updatedBy,
+    changeSummary: `Restored version ${version.versionNumber}`,
+  });
+}
+
 export function resetTacticalStore() {
   units.clear();
   markupVersions.clear();
   documents.clear();
   scenarios.clear();
+  scenarioVersions.clear();
 }
