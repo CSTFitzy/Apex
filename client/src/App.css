@@ -670,3 +670,132 @@
   background: transparent;
   border: none;
 }
+
+/* ==== Map drawing tools + analysis stats overlays ==== */
+.map-tools-panel,
+.map-stats-panel {
+  position: absolute;
+  z-index: 1000;
+  width: 250px;
+  background-color: rgba(15, 20, 35, 0.94);
+  border: 1px solid #00b4d8;
+  border-radius: 6px;
+  padding: 12px;
+  color: #d7e3f4;
+  font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.map-tools-panel {
+  top: 12px;
+  left: 12px;
+}
+
+.map-stats-panel {
+  bottom: 24px;
+  left: 12px;
+  max-height: 45%;
+  overflow-y: auto;
+}
+
+.map-tools-panel h3,
+.map-stats-panel h3 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: #00b4d8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.map-stats-panel h4 {
+  margin: 8px 0 4px 0;
+  font-size: 12px;
+  color: #90caf9;
+  text-transform: uppercase;
+}
+
+.tool-group {
+  margin-bottom: 10px;
+}
+
+.tool-group-label {
+  display: block;
+  font-size: 11px;
+  color: #90caf9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.tool-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tool-btn {
+  background-color: #1a2940;
+  color: #d7e3f4;
+  border: 1px solid #2c4670;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tool-btn:hover:not(:disabled) {
+  border-color: #00b4d8;
+  box-shadow: 0 0 8px rgba(0, 180, 216, 0.4);
+}
+
+.tool-btn.active {
+  background-color: #00b4d8;
+  color: #0a0e27;
+  font-weight: 700;
+}
+
+.tool-btn.danger {
+  border-color: #e74c3c;
+  color: #ffb3ab;
+}
+
+.tool-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tool-status {
+  margin: 8px 0 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #2c4670;
+  line-height: 1.4;
+  color: #9fb3cc;
+}
+
+.stats-block ul {
+  list-style: none;
+  margin: 0 0 6px 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.stats-block .los-stats {
+  border-top: 1px solid #2c4670;
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+.stats-empty {
+  margin: 0;
+  color: #7f8fa6;
+  font-style: italic;
+}
+
+.visible-count {
+  color: #00ff88;
+}
+
+.blocked-count {
+  color: #ff6b6b;
+}

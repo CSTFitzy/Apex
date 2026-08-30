@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../api/client';
-import type { LatLon, WeatherData } from '../types';
+import type { AreaOfOperations, WeatherData } from '../types';
 
 interface Props {
-  aoCenter: LatLon | null;
+  ao: AreaOfOperations | null;
 }
 
 const impactColor: Record<string, string> = {
@@ -13,21 +13,24 @@ const impactColor: Record<string, string> = {
   SEVERE: '#e74c3c',
 };
 
-export default function WeatherPanel({ aoCenter }: Props) {
+export default function WeatherPanel({ ao }: Props) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchWeather = async () => {
-    if (!aoCenter) {
-      setError('Define an operational area on the map first (draw an AO polygon/rectangle).');
+  const aoLat = ao?.center.lat;
+  const aoLon = ao?.center.lon;
+
+  const fetchWeather = useCallback(async () => {
+    if (aoLat === undefined || aoLon === undefined) {
+      setError('Define an operating area on the map first (use the Rectangle, Circle or Freehand tool).');
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const { data } = await api.get<WeatherData>('/weather', {
-        params: { lat: aoCenter.lat, lon: aoCenter.lon },
+        params: { lat: aoLat, lon: aoLon },
       });
       setWeather(data);
     } catch (err) {
@@ -36,14 +39,25 @@ export default function WeatherPanel({ aoCenter }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [aoLat, aoLon]);
+
+  // Automatically focus the analysis on the AO whenever its centroid changes
+  useEffect(() => {
+    if (aoLat === undefined || aoLon === undefined) return;
+    void fetchWeather();
+  }, [aoLat, aoLon, fetchWeather]);
 
   return (
     <div className="weather-panel">
       <h2>Weather Analysis Engine</h2>
       <p className="panel-subtitle">Live data via Open-Meteo (free, no API key required)</p>
+      <p className="panel-subtitle">
+        {ao
+          ? `Focused on the ${ao.shape} AO centroid (${ao.center.lat.toFixed(4)}, ${ao.center.lon.toFixed(4)}) - ${ao.areaKm2.toFixed(2)} km²`
+          : 'No AO defined - draw one on the map to auto-focus the weather analysis.'}
+      </p>
       <button className="action-btn" onClick={fetchWeather} disabled={loading}>
-        {loading ? 'Fetching...' : 'Analyze AO Weather'}
+        {loading ? 'Fetching...' : 'Refresh AO Weather'}
       </button>
       {error && <p className="error-text">{error}</p>}
 

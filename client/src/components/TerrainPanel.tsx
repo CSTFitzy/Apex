@@ -27,7 +27,7 @@ export default function TerrainPanel({
   const [report, setReport] = useState<TerrainReport | null>(null);
 
   const runSpotHeights = async () => {
-    if (!aoBounds) return setError('Draw an operational area on the map first.');
+    if (!aoBounds) return setError('Define an operating area first using the drawing tools on the map.');
     setLoading('spot-heights');
     setError(null);
     try {
@@ -78,7 +78,7 @@ export default function TerrainPanel({
   };
 
   const runReport = async () => {
-    if (!aoBounds) return setError('Draw an operational area on the map first.');
+    if (!aoBounds) return setError('Define an operating area first using the drawing tools on the map.');
     setLoading('report');
     setError(null);
     try {
