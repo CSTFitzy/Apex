@@ -3,6 +3,7 @@ import {
   BoundingBox,
   LatLon,
   bearing,
+  castVisibilityRay,
   computeLineOfSight,
   computeSlopeAspect,
   destinationPoint,
@@ -169,9 +170,11 @@ router.post('/los', async (req: Request, res: Response) => {
 /**
  * POST /api/terrain/viewshed
  * Body: { origin: {lat, lon}, radius (m), rays?, observerHeight?, targetHeight? }
- * Simplified 360-degree viewshed: casts rays outward from the origin at
- * regular bearing increments and reports the maximum visible distance and
- * any obstructed sectors along each ray.
+ * 360-degree viewshed: casts rays outward from the origin at regular bearing
+ * increments and uses maximum-vertical-angle ray casting to determine which
+ * samples along each ray are visible from the observer (default eye height
+ * 1.5 m AGL). Returns the distance to the first obstruction per sector plus
+ * aggregate visible/blocked sample counts for the whole disc.
  */
 router.post('/viewshed', async (req: Request, res: Response) => {
   try {
@@ -179,8 +182,8 @@ router.post('/viewshed', async (req: Request, res: Response) => {
       origin,
       radius = 5000,
       rays = 24,
-      observerHeight = 2,
-      targetHeight = 2,
+      observerHeight = 1.5,
+      targetHeight = 0,
     } = req.body as {
       origin: LatLon;
       radius?: number;
@@ -191,33 +194,58 @@ router.post('/viewshed', async (req: Request, res: Response) => {
     if (!origin) return res.status(400).json({ error: 'origin is required' });
 
     const numRays = Math.min(72, Math.max(8, rays));
+    const effectiveRadius = Math.min(50000, Math.max(50, radius));
+    const steps = Math.min(40, Math.max(10, Math.round(effectiveRadius / 150)));
+
+    // Sample every ray up-front so all elevations are fetched in batched
+    // requests instead of one upstream round-trip per ray. This keeps the
+    // interactive LOS circle responsive while it is being dragged.
+    const rayPoints: LatLon[][] = [];
+    const allPoints: LatLon[] = [];
+    for (let r = 0; r < numRays; r++) {
+      const bearingDeg = (360 / numRays) * r;
+      const endPoint = destinationPoint(origin, bearingDeg, effectiveRadius);
+      const samplePoints = interpolatePoints(origin, endPoint, steps);
+      rayPoints.push(samplePoints);
+      allPoints.push(...samplePoints);
+    }
+
+    const allElevations = await fetchElevations(allPoints);
     const sectors = [];
+    let visibleSamples = 0;
+    let blockedSamples = 0;
 
     for (let r = 0; r < numRays; r++) {
       const bearingDeg = (360 / numRays) * r;
-      const endPoint = destinationPoint(origin, bearingDeg, radius);
-      const steps = 15;
-      const samplePoints = interpolatePoints(origin, endPoint, steps);
-      const elevationProfile = await fetchElevations(samplePoints);
-      const los = computeLineOfSight(elevationProfile, observerHeight, targetHeight);
+      const rayLength = rayPoints[r].length;
+      const elevationProfile = allElevations.slice(r * rayLength, (r + 1) * rayLength);
+      const endPoint = rayPoints[r][rayLength - 1];
+      const ray = castVisibilityRay(elevationProfile, observerHeight, targetHeight);
 
-      let visibleDistance = radius;
-      if (!los.visible && los.obstructedAt) {
-        visibleDistance = haversineDistance(origin, los.obstructedAt);
-      }
+      visibleSamples += ray.points.filter((p) => p.visible).length;
+      blockedSamples += ray.points.filter((p) => !p.visible).length;
 
       sectors.push({
         bearing: bearingDeg,
         endPoint,
-        visible: los.visible,
-        visibleDistanceM: visibleDistance,
+        visible: ray.firstObstructionDistanceM === null,
+        visibleDistanceM: ray.firstObstructionDistanceM ?? effectiveRadius,
       });
     }
 
-    const visibleAreaPct =
-      (sectors.filter((s) => s.visible).length / sectors.length) * 100;
+    const sampleCount = visibleSamples + blockedSamples;
+    const visibleAreaPct = sampleCount === 0 ? 0 : (visibleSamples / sampleCount) * 100;
 
-    res.json({ origin, radius, sectors, visibleAreaPct });
+    res.json({
+      origin,
+      radius: effectiveRadius,
+      observerHeight,
+      sectors,
+      visibleSamples,
+      blockedSamples,
+      sampleCount,
+      visibleAreaPct,
+    });
   } catch (error) {
     console.error('Viewshed analysis failed:', error);
     res.status(500).json({ error: 'Failed to compute viewshed' });

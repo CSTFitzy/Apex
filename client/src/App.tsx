@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import TacticalMap from './components/TacticalMap'
+import { AnalysisStatsPanel, DrawingToolsPanel } from './components/MapTools'
 import WeatherPanel from './components/WeatherPanel'
 import TerrainPanel from './components/TerrainPanel'
 import DocumentsPanel from './components/DocumentsPanel'
 import EnemyPanel from './components/EnemyPanel'
 import SimulationPanel from './components/SimulationPanel'
+import api from './api/client'
+import { buildAO, rectangleVertices } from './utils/geometry'
 import type {
   AOBounds,
+  AreaOfOperations,
   CounterPlanResult,
   DocumentUploadResult,
+  DrawMode,
   LatLon,
+  LosObserver,
   SpotHeight,
   TacticalUnit,
   ViewshedResult,
@@ -18,8 +24,20 @@ import './App.css'
 
 type Tab = 'terrain' | 'weather' | 'documents' | 'enemy' | 'simulation'
 
-function boundsCenter(bounds: AOBounds): LatLon {
-  return { lat: (bounds.north + bounds.south) / 2, lon: (bounds.east + bounds.west) / 2 }
+/** Observer eye height above ground level used by the LOS visibility tool. */
+const OBSERVER_HEIGHT_M = 1.5
+const LOS_RAYS = 36
+const MAX_LOS_RADIUS_M = 20000
+const DRAFT_OBSERVER_ID = 'los-draft'
+
+function aoFromBounds(bounds: AOBounds): AreaOfOperations {
+  return buildAO(
+    'rectangle',
+    rectangleVertices(
+      { lat: bounds.north, lon: bounds.west },
+      { lat: bounds.south, lon: bounds.east }
+    )
+  )
 }
 
 function App() {
@@ -28,8 +46,9 @@ function App() {
   // Default map center (Sydney, Australia)
   const [mapCenter] = useState<LatLon>({ lat: -33.8688, lon: 151.2093 })
 
-  const [aoBounds, setAOBounds] = useState<AOBounds | null>(null)
-  const [aoCenter, setAOCenter] = useState<LatLon | null>(null)
+  const [ao, setAO] = useState<AreaOfOperations | null>(null)
+  const [drawMode, setDrawMode] = useState<DrawMode>('none')
+  const [observers, setObservers] = useState<LosObserver[]>([])
 
   const [spotHeights, setSpotHeights] = useState<SpotHeight[]>([])
   const [losPoints, setLosPoints] = useState<LatLon[]>([])
@@ -40,14 +59,11 @@ function App() {
   const [counterPlan, setCounterPlan] = useState<CounterPlanResult | null>(null)
   const [units, setUnits] = useState<TacticalUnit[]>([])
 
-  const handleAOChange = (bounds: AOBounds | null) => {
-    setAOBounds(bounds)
-    setAOCenter(bounds ? boundsCenter(bounds) : null)
-  }
+  const aoBounds = ao?.bounds ?? null
+  const aoCenter = ao?.center ?? null
 
-  const handleAOIdentified = (center: LatLon, bounds: AOBounds) => {
-    setAOCenter(center)
-    setAOBounds(bounds)
+  const handleAOIdentified = (_center: LatLon, bounds: AOBounds) => {
+    setAO(aoFromBounds(bounds))
   }
 
   const handleMapClick = (point: LatLon) => {
@@ -55,6 +71,58 @@ function App() {
       if (prev.length >= 2) return [point]
       return [...prev, point]
     })
+  }
+
+  /** Live preview while the user drags the LOS circle - no terrain query yet. */
+  const handleLosDraft = (position: LatLon, radiusM: number) => {
+    setObservers((prev) => [
+      ...prev.filter((o) => o.id !== DRAFT_OBSERVER_ID),
+      {
+        id: DRAFT_OBSERVER_ID,
+        position,
+        observerHeightM: OBSERVER_HEIGHT_M,
+        radiusM: Math.min(radiusM, MAX_LOS_RADIUS_M),
+        viewshed: null,
+        loading: false,
+      },
+    ])
+  }
+
+  /** Drag finished: run the terrain viewshed for the observer at 1.5 m AGL. */
+  const handleLosCommit = async (position: LatLon, rawRadiusM: number) => {
+    const radiusM = Math.min(rawRadiusM, MAX_LOS_RADIUS_M)
+    const id = `los-${Date.now()}`
+    setObservers((prev) => [
+      ...prev.filter((o) => o.id !== DRAFT_OBSERVER_ID),
+      {
+        id,
+        position,
+        observerHeightM: OBSERVER_HEIGHT_M,
+        radiusM,
+        viewshed: null,
+        loading: true,
+      },
+    ])
+
+    try {
+      const { data } = await api.post<ViewshedResult>('/terrain/viewshed', {
+        origin: position,
+        radius: radiusM,
+        rays: LOS_RAYS,
+        observerHeight: OBSERVER_HEIGHT_M,
+        targetHeight: 0,
+      })
+      setObservers((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, viewshed: data, loading: false } : o))
+      )
+    } catch (err) {
+      console.error(err)
+      setObservers((prev) =>
+        prev.map((o) =>
+          o.id === id ? { ...o, loading: false, error: 'Visibility analysis failed.' } : o
+        )
+      )
+    }
   }
 
   return (
@@ -87,14 +155,28 @@ function App() {
         <main className="map-main">
           <TacticalMap
             center={aoCenter ?? mapCenter}
-            aoBounds={aoBounds}
-            onAOChange={handleAOChange}
+            ao={ao}
+            drawMode={drawMode}
+            onAOChange={setAO}
+            onDrawModeChange={setDrawMode}
+            observers={observers}
+            onLosDraft={handleLosDraft}
+            onLosCommit={handleLosCommit}
             spotHeights={spotHeights}
             losPoints={losPoints}
             onMapClick={handleMapClick}
             units={units}
             viewshed={viewshed}
           />
+          <DrawingToolsPanel
+            drawMode={drawMode}
+            onDrawModeChange={setDrawMode}
+            hasAO={ao !== null}
+            onClearAO={() => setAO(null)}
+            observerCount={observers.length}
+            onClearObservers={() => setObservers([])}
+          />
+          <AnalysisStatsPanel ao={ao} observers={observers} />
         </main>
 
         <aside className="side-panel">
@@ -109,7 +191,7 @@ function App() {
               onTerrainSummary={setTerrainSummary}
             />
           )}
-          {activeTab === 'weather' && <WeatherPanel aoCenter={aoCenter} />}
+          {activeTab === 'weather' && <WeatherPanel ao={ao} />}
           {activeTab === 'documents' && (
             <DocumentsPanel onAOIdentified={handleAOIdentified} onExtraction={setDocResult} />
           )}

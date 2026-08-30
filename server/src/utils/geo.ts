@@ -153,6 +153,61 @@ export function computeLineOfSight(
   return { visible, obstructedAt, profile: annotated };
 }
 
+export interface RayVisibilityPoint extends ElevationPoint {
+  distance: number;
+  visible: boolean;
+}
+
+/**
+ * Radial line-of-sight ray casting using the classic maximum-vertical-angle
+ * algorithm: walking outward from the observer, a sample is visible when its
+ * vertical angle (corrected for earth curvature and refraction) is at least as
+ * high as every sample before it. This yields per-sample visibility along the
+ * ray - what the LOS visibility disc renders as green (visible) and red
+ * (terrain shadow) - as well as the distance to the first obstruction.
+ */
+export function castVisibilityRay(
+  profile: ElevationPoint[],
+  observerHeight = 1.5,
+  targetHeight = 0
+): { points: RayVisibilityPoint[]; firstObstructionDistanceM: number | null } {
+  if (profile.length < 2) {
+    return { points: [], firstObstructionDistanceM: null };
+  }
+
+  const origin = profile[0];
+  const observerElev = origin.elevation + observerHeight;
+
+  const REFRACTION_COEFF = 0.13;
+  const curvatureAndRefraction = (d: number) =>
+    ((1 - REFRACTION_COEFF) * d * d) / (2 * EARTH_RADIUS_M);
+
+  let maxAngle = -Infinity;
+  let firstObstructionDistanceM: number | null = null;
+  const points: RayVisibilityPoint[] = [];
+
+  for (let i = 1; i < profile.length; i++) {
+    const p = profile[i];
+    const distance = haversineDistance(origin, p);
+    if (distance <= 0) continue;
+
+    const apparentElev =
+      p.elevation + targetHeight - curvatureAndRefraction(distance);
+    const angle = (apparentElev - observerElev) / distance;
+    const visible = angle >= maxAngle;
+
+    if (visible) {
+      maxAngle = angle;
+    } else if (firstObstructionDistanceM === null) {
+      firstObstructionDistanceM = distance;
+    }
+
+    points.push({ ...p, distance, visible });
+  }
+
+  return { points, firstObstructionDistanceM };
+}
+
 /** Compute slope (degrees) and aspect (degrees, 0=N) from a 3x3 elevation grid using Horn's method. */
 export function computeSlopeAspect(
   grid: number[][],

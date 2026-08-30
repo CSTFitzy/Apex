@@ -10,6 +10,36 @@ export interface AOBounds {
   west: number;
 }
 
+export type AOShape = 'rectangle' | 'circle' | 'polygon';
+
+/** A user-drawn operational area (AO) that scopes every other analysis tool. */
+export interface AreaOfOperations {
+  shape: AOShape;
+  /** Outline vertices (for a circle these approximate the circumference). */
+  vertices: LatLon[];
+  /** Circle definition, present only when shape === 'circle'. */
+  circle?: { center: LatLon; radiusM: number };
+  bounds: AOBounds;
+  /** Centroid used for point queries such as weather. */
+  center: LatLon;
+  areaKm2: number;
+  perimeterKm: number;
+}
+
+/** Active map interaction mode for the drawing tools panel. */
+export type DrawMode = 'none' | 'rectangle' | 'circle' | 'polygon' | 'los';
+
+/** A line-of-sight observer placed on the map (eye height fixed at 1.5 m AGL). */
+export interface LosObserver {
+  id: string;
+  position: LatLon;
+  observerHeightM: number;
+  radiusM: number;
+  viewshed: ViewshedResult | null;
+  loading: boolean;
+  error?: string;
+}
+
 export interface SpotHeight extends LatLon {
   elevation: number;
   prominence: number;
@@ -49,7 +79,14 @@ export interface ViewshedSector {
 export interface ViewshedResult {
   origin: LatLon;
   radius: number;
+  /** Observer eye height (metres AGL) used for the analysis. */
+  observerHeight?: number;
   sectors: ViewshedSector[];
+  /** Terrain samples visible from the observer across all rays. */
+  visibleSamples?: number;
+  /** Terrain samples in shadow across all rays. */
+  blockedSamples?: number;
+  sampleCount?: number;
   visibleAreaPct: number;
 }
 
