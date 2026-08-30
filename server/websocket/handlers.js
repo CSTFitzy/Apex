@@ -12,6 +12,9 @@ export const MESSAGE_TYPES = {
   MAP_UPDATE: 'MAP_UPDATE',
   WEATHER_ALERT: 'WEATHER_ALERT',
   INTELLIGENCE_UPDATE: 'INTELLIGENCE_UPDATE',
+  SIMULATION_UPDATE: 'SIMULATION_UPDATE',
+  KPI_UPDATE: 'KPI_UPDATE',
+  BDA_UPDATE: 'BDA_UPDATE',
   SUBSCRIBE: 'SUBSCRIBE',
   ERROR: 'ERROR',
 };
@@ -138,4 +141,19 @@ export function broadcastWeatherAlert(wss, data) {
 /** Broadcast an intelligence update (new ODIN report, etc). */
 export function broadcastIntelligenceUpdate(wss, data) {
   broadcast(wss, MESSAGE_TYPES.INTELLIGENCE_UPDATE, data, 'intelligence');
+}
+
+/** Broadcast a live simulation tick (unit positions + new engagement events). */
+export function broadcastSimulationUpdate(wss, data) {
+  broadcast(wss, MESSAGE_TYPES.SIMULATION_UPDATE, data, 'simulation');
+}
+
+/** Broadcast refreshed KPI figures for the live analytics dashboard. */
+export function broadcastKpiUpdate(wss, data) {
+  broadcast(wss, MESSAGE_TYPES.KPI_UPDATE, data, 'analytics');
+}
+
+/** Broadcast new Battle Damage Assessment rows. */
+export function broadcastBdaUpdate(wss, data) {
+  broadcast(wss, MESSAGE_TYPES.BDA_UPDATE, data, 'analytics');
 }

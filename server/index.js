@@ -15,13 +15,22 @@ import rateLimit from 'express-rate-limit';
 
 import { pool, checkConnection } from './db/connection.js';
 import { initSchema } from './db/models.js';
-import { registerWebSocketHandlers } from './websocket/handlers.js';
+import {
+  registerWebSocketHandlers,
+  broadcastSimulationUpdate,
+  broadcastKpiUpdate,
+  broadcastBdaUpdate,
+} from './websocket/handlers.js';
 import { logger } from './utils/logger.js';
+import { simulationEngine } from './simulation/engine.js';
+import { computeKpis, computeBda } from './analytics/tactical.js';
+import { register as metricsRegister, updateMetricsFromKpis } from './analytics/metrics.js';
 
 import authRoutes from './routes/auth.js';
 import odinRoutes from './routes/odin.js';
 import weatherRoutes from './routes/weather.js';
 import tacticalRoutes from './routes/tactical.js';
+import analyticsRoutes from './routes/analytics.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -107,6 +116,22 @@ app.get('/api/health', async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
+/* Prometheus metrics (Grafana integration)                            */
+/* ------------------------------------------------------------------ */
+
+// Intentionally outside /api and unauthenticated so a Prometheus scraper
+// (see docker-compose.yml + grafana/) can reach it without a JWT.
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', metricsRegister.contentType);
+    res.end(await metricsRegister.metrics());
+  } catch (err) {
+    logger.error('Failed to render Prometheus metrics', { error: err.message });
+    res.status(500).end();
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /* API routes                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -114,6 +139,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/odin', odinRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/tactical', tacticalRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 /* ------------------------------------------------------------------ */
 /* 404 + error handling                                                 */
@@ -138,6 +164,20 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 registerWebSocketHandlers(wss);
 
+// Drive the live simulation and stream KPI/BDA/unit updates to subscribed
+// dashboard clients, and keep Prometheus gauges in sync for Grafana.
+simulationEngine.onTick(({ units, events }) => {
+  broadcastSimulationUpdate(wss, { units, events });
+
+  const kpis = computeKpis({ units, events: simulationEngine.getEvents() });
+  broadcastKpiUpdate(wss, kpis);
+  updateMetricsFromKpis(kpis);
+
+  if (events.length > 0) {
+    broadcastBdaUpdate(wss, computeBda({ events }));
+  }
+});
+
 async function start() {
   try {
     await redisClient.connect();
@@ -152,6 +192,8 @@ async function start() {
     logger.error('Failed to initialize database schema', { error: err.message });
   }
 
+  simulationEngine.start(Number(process.env.SIMULATION_TICK_MS) || 2000);
+
   server.listen(PORT, () => {
     logger.info(`Sharknet server listening on port ${PORT}`);
   });
@@ -164,6 +206,7 @@ if (process.argv[1] && process.argv[1].endsWith('index.js')) {
 
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
+  simulationEngine.stop();
   await pool.end();
   if (redisClient.isOpen) await redisClient.quit();
   server.close(() => process.exit(0));

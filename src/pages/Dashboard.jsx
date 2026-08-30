@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Map from '../components/Map.jsx';
 import WeatherWidget from '../components/WeatherWidget.jsx';
 import IntelligencePanel from '../components/IntelligencePanel.jsx';
@@ -56,6 +56,9 @@ export default function Dashboard({ onLogout }) {
     <div className="dashboard">
       <header className="dashboard-header">
         <h1>Sharknet</h1>
+        <nav className="dashboard-nav">
+          <Link to="/analytics">Live Analytics</Link>
+        </nav>
         <button onClick={handleLogout}>Log out</button>
       </header>
 

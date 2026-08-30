@@ -63,6 +63,13 @@ export const api = {
   getWeatherForecast: (lat, lon) => request(`/weather/forecast?lat=${lat}&lon=${lon}`),
   getIntelligenceReports: () => request('/odin/reports'),
   getTacticalLocations: () => request('/tactical/locations'),
+
+  // Live tactical analytics.
+  getKpis: () => request('/analytics/kpis'),
+  getBda: () => request('/analytics/bda'),
+  getHeatmaps: () => request('/analytics/heatmaps'),
+  getHeatmap: (type) => request(`/analytics/heatmaps/${type}`),
+  getUnits: () => request('/analytics/units'),
 };
 
 export default api;

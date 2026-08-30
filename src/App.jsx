@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard.jsx';
 import Login from './pages/Login.jsx';
+import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 
 /**
  * Root application component. Handles top-level routing and auth state.
@@ -41,6 +42,12 @@ export default function App() {
             ) : (
               <Navigate to="/login" replace />
             )
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            isAuthenticated ? <AnalyticsDashboard /> : <Navigate to="/login" replace />
           }
         />
       </Routes>

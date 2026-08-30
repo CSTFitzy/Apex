@@ -132,3 +132,167 @@ label {
 .intelligence-panel-error {
   color: var(--color-danger);
 }
+
+.dashboard-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.dashboard-nav a {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+/* Live tactical analytics dashboard */
+.analytics-dashboard {
+  min-height: 100vh;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.connection-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+.connection-badge--up {
+  background: rgba(63, 185, 80, 0.15);
+  color: #3fb950;
+}
+
+.connection-badge--down {
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--color-danger);
+}
+
+.kpi-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.kpi-dashboard--empty {
+  color: var(--color-muted);
+  padding: 1rem;
+}
+
+.kpi-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.kpi-card__label {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-card__value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.kpi-card--friendly .kpi-card__value {
+  color: var(--color-accent);
+}
+
+.kpi-card--hostile .kpi-card__value,
+.kpi-card--danger .kpi-card__value {
+  color: var(--color-danger);
+}
+
+.kpi-card--success .kpi-card__value {
+  color: #3fb950;
+}
+
+.analytics-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 3fr 1.2fr;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.analytics-map {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.heatmap-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.heatmap-button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+}
+
+.heatmap-button--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.analytics-bda {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.bda-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.bda-table th,
+.bda-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bda-table__empty {
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.bda-side {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.bda-row--destroyed {
+  color: var(--color-danger);
+}
+
+.bda-row--suppressed {
+  color: #d29922;
+}
