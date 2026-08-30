@@ -19,6 +19,22 @@ export function setToken(token) {
   }
 }
 
+/**
+ * Decode the current user's id/username/role from the stored JWT, without
+ * verifying its signature (verification happens server-side). Returns
+ * null if there is no token or it can't be decoded.
+ */
+export function getCurrentUser() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const [, payload] = token.split('.');
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return null;
+  }
+}
+
 /** Build the standard authorization header value for a JWT. */
 function buildAuthHeader(token) {
   const scheme = 'Bearer';
@@ -69,6 +85,10 @@ export const api = {
     request('/analytics/heatmap', { method: 'POST', body: JSON.stringify({ units, events, type }) }),
   postAnalyticsEvent: (event) => request('/analytics/events', { method: 'POST', body: JSON.stringify(event) }),
   getAnalyticsEvents: (limit) => request(`/analytics/events${limit ? `?limit=${limit}` : ''}`),
+  getMessages: (conversationId = 'global') =>
+    request(`/messages?conversationId=${encodeURIComponent(conversationId)}`),
+  sendMessage: (text, conversationId = 'global') =>
+    request('/messages', { method: 'POST', body: JSON.stringify({ text, conversationId }) }),
 };
 
 export default api;

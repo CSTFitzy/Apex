@@ -3,10 +3,13 @@
  *
  * Supports broadcasting map updates, weather alerts, and intelligence
  * updates to all connected clients (or a subset, in the future, based on
- * subscription topics).
+ * subscription topics), as well as real-time text messaging and WebRTC
+ * voice-call signaling (offer/answer/ICE candidate exchange) between
+ * specific users.
  */
 import { verifyToken } from '../auth/jwt.js';
 import { logger } from '../utils/logger.js';
+import { Messages } from '../comms/store.js';
 
 export const MESSAGE_TYPES = {
   MAP_UPDATE: 'MAP_UPDATE',
@@ -15,7 +18,19 @@ export const MESSAGE_TYPES = {
   ANALYTICS_EVENT: 'ANALYTICS_EVENT',
   SUBSCRIBE: 'SUBSCRIBE',
   ERROR: 'ERROR',
+  // Real-time messaging
+  CHAT_MESSAGE: 'CHAT_MESSAGE',
+  TYPING: 'TYPING',
+  PRESENCE: 'PRESENCE',
+  // WebRTC voice/video call signaling
+  CALL_OFFER: 'CALL_OFFER',
+  CALL_ANSWER: 'CALL_ANSWER',
+  CALL_ICE_CANDIDATE: 'CALL_ICE_CANDIDATE',
+  CALL_END: 'CALL_END',
 };
+
+/** Registry of userId -> Set of connected sockets, used for presence + call routing. */
+const connectedUsers = new Map();
 
 /**
  * Attach connection/message handling to a `ws` WebSocketServer instance.
@@ -30,16 +45,25 @@ export function registerWebSocketHandlers(wss) {
 
     logger.info('WebSocket client connected');
 
+    if (socket.user) {
+      registerUserSocket(socket);
+      sendPresenceSnapshot(socket);
+      broadcastPresence(wss, socket.user, 'online');
+    }
+
     socket.on('pong', () => {
       socket.isAlive = true;
     });
 
     socket.on('message', (raw) => {
-      handleMessage(socket, raw);
+      handleMessage(wss, socket, raw);
     });
 
     socket.on('close', () => {
       logger.info('WebSocket client disconnected');
+      if (socket.user) {
+        unregisterUserSocket(wss, socket);
+      }
     });
 
     socket.on('error', (err) => {
@@ -79,7 +103,52 @@ function authenticateSocket(socket, request) {
   }
 }
 
-function handleMessage(socket, raw) {
+/* ------------------------------------------------------------------ */
+/* Presence tracking                                                    */
+/* ------------------------------------------------------------------ */
+
+function registerUserSocket(socket) {
+  const userId = socket.user.id;
+  const sockets = connectedUsers.get(userId) || new Set();
+  sockets.add(socket);
+  connectedUsers.set(userId, sockets);
+}
+
+function unregisterUserSocket(wss, socket) {
+  const userId = socket.user.id;
+  const sockets = connectedUsers.get(userId);
+  if (!sockets) return;
+  sockets.delete(socket);
+  if (sockets.size === 0) {
+    connectedUsers.delete(userId);
+    broadcastPresence(wss, socket.user, 'offline');
+  }
+}
+
+function sendPresenceSnapshot(socket) {
+  const online = [...connectedUsers.keys()];
+  sendTo(socket, MESSAGE_TYPES.PRESENCE, { status: 'snapshot', online });
+}
+
+function broadcastPresence(wss, user, status) {
+  if (!wss) return;
+  broadcast(wss, MESSAGE_TYPES.PRESENCE, {
+    status,
+    userId: user.id,
+    username: user.username,
+  });
+}
+
+/** List currently connected user IDs (used for presence indicators). */
+export function getOnlineUserIds() {
+  return [...connectedUsers.keys()];
+}
+
+/* ------------------------------------------------------------------ */
+/* Message handling                                                     */
+/* ------------------------------------------------------------------ */
+
+function handleMessage(wss, socket, raw) {
   let message;
   try {
     message = JSON.parse(raw.toString());
@@ -90,6 +159,18 @@ function handleMessage(socket, raw) {
   switch (message.type) {
     case MESSAGE_TYPES.SUBSCRIBE:
       handleSubscribe(socket, message.payload);
+      break;
+    case MESSAGE_TYPES.CHAT_MESSAGE:
+      handleChatMessage(wss, socket, message.payload);
+      break;
+    case MESSAGE_TYPES.TYPING:
+      handleTyping(wss, socket, message.payload);
+      break;
+    case MESSAGE_TYPES.CALL_OFFER:
+    case MESSAGE_TYPES.CALL_ANSWER:
+    case MESSAGE_TYPES.CALL_ICE_CANDIDATE:
+    case MESSAGE_TYPES.CALL_END:
+      handleCallSignal(socket, message.type, message.payload);
       break;
     default:
       sendError(socket, `Unknown message type: ${message.type}`);
@@ -103,10 +184,91 @@ function handleSubscribe(socket, payload = {}) {
   }
 }
 
+function handleChatMessage(wss, socket, payload = {}) {
+  if (!socket.user) {
+    return sendError(socket, 'Authentication required to send messages');
+  }
+
+  const text = typeof payload.text === 'string' ? payload.text.trim() : '';
+  if (!text) {
+    return sendError(socket, 'Message text is required');
+  }
+
+  const message = Messages.create({
+    conversationId: payload.conversationId || 'global',
+    senderId: socket.user.id,
+    senderUsername: socket.user.username,
+    text,
+  });
+
+  broadcastChatMessage(wss, message);
+}
+
+function handleTyping(wss, socket, payload = {}) {
+  if (!socket.user) return;
+  broadcast(wss, MESSAGE_TYPES.TYPING, {
+    conversationId: payload.conversationId || 'global',
+    userId: socket.user.id,
+    username: socket.user.username,
+    isTyping: Boolean(payload.isTyping),
+  });
+}
+
+/**
+ * Route a WebRTC signaling message (offer/answer/ICE candidate/hangup)
+ * directly to the target user's connected sockets.
+ */
+function handleCallSignal(socket, type, payload = {}) {
+  if (!socket.user) {
+    return sendError(socket, 'Authentication required for calls');
+  }
+
+  const { targetUserId } = payload;
+  if (targetUserId === undefined || targetUserId === null) {
+    return sendError(socket, 'targetUserId is required for call signaling');
+  }
+
+  const delivered = sendToUser(targetUserId, type, {
+    ...payload,
+    fromUserId: socket.user.id,
+    fromUsername: socket.user.username,
+  });
+
+  if (!delivered && type === MESSAGE_TYPES.CALL_OFFER) {
+    sendTo(socket, MESSAGE_TYPES.CALL_END, {
+      targetUserId,
+      reason: 'user_offline',
+    });
+  }
+}
+
 function sendError(socket, error) {
   if (socket.readyState === socket.OPEN) {
     socket.send(JSON.stringify({ type: MESSAGE_TYPES.ERROR, payload: { error } }));
   }
+}
+
+function sendTo(socket, type, payload) {
+  if (socket.readyState === socket.OPEN) {
+    socket.send(JSON.stringify({ type, payload }));
+  }
+}
+
+/**
+ * Send a typed message to every connected socket for a given user id.
+ * Returns true if delivered to at least one socket.
+ */
+function sendToUser(userId, type, payload) {
+  const sockets = connectedUsers.get(userId);
+  if (!sockets || sockets.size === 0) return false;
+  let delivered = false;
+  sockets.forEach((socket) => {
+    if (socket.readyState === socket.OPEN) {
+      sendTo(socket, type, payload);
+      delivered = true;
+    }
+  });
+  return delivered;
 }
 
 /**
@@ -144,4 +306,9 @@ export function broadcastIntelligenceUpdate(wss, data) {
 /** Broadcast a tactical analytics event (casualty report, enemy contact, etc). */
 export function broadcastAnalyticsEvent(wss, data) {
   broadcast(wss, MESSAGE_TYPES.ANALYTICS_EVENT, data, 'analytics');
+}
+
+/** Broadcast a chat message to clients subscribed to the 'comms' topic. */
+export function broadcastChatMessage(wss, message) {
+  broadcast(wss, MESSAGE_TYPES.CHAT_MESSAGE, message, 'comms');
 }

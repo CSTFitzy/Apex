@@ -6,10 +6,11 @@ import IntelligencePanel from '../components/IntelligencePanel.jsx';
 import AnalysisChart from '../components/AnalysisChart.jsx';
 import SimulationPanel from '../components/SimulationPanel.jsx';
 import AnalyticsPanel from '../components/AnalyticsPanel.jsx';
+import CommunicationsPanel from '../components/comms/CommunicationsPanel.jsx';
 import api, { setToken } from '../utils/api.js';
 import SharknetSocket from '../utils/websocket.js';
 
-const TABS = [
+const SIDEBAR_TABS = [
   { id: 'intel', label: 'Intel' },
   { id: 'simulation', label: 'Simulation' },
   { id: 'analytics', label: 'Analytics' },
@@ -22,7 +23,8 @@ export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [activeTab, setActiveTab] = useState('intel');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [sidebarTab, setSidebarTab] = useState('intel');
   const [simUnits, setSimUnits] = useState([]);
   const [simEvents, setSimEvents] = useState([]);
   const [heatmap, setHeatmap] = useState(null);
@@ -77,39 +79,55 @@ export default function Dashboard({ onLogout }) {
     <div className="dashboard">
       <header className="dashboard-header">
         <h1>Sharknet</h1>
+        <nav className="dashboard-tabs">
+          <button
+            type="button"
+            className={activeTab === 'overview' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'comms' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('comms')}
+          >
+            Communications
+          </button>
+        </nav>
         <button onClick={handleLogout}>Log out</button>
       </header>
 
-      <div className="dashboard-grid">
+      <div className={activeTab === 'overview' ? 'dashboard-grid' : 'tab-hidden'}>
         <section className="dashboard-map">
           <Map locations={locations} onSelect={setSelected} heatmap={heatmap} />
         </section>
 
         <aside className="dashboard-sidebar">
           <nav className="dashboard-tabs">
-            {TABS.map((tab) => (
+            {SIDEBAR_TABS.map((tab) => (
               <button
                 key={tab.id}
-                className={activeTab === tab.id ? 'dashboard-tab-active' : ''}
-                onClick={() => setActiveTab(tab.id)}
+                className={sidebarTab === tab.id ? 'dashboard-tab-active' : ''}
+                onClick={() => setSidebarTab(tab.id)}
               >
                 {tab.label}
               </button>
             ))}
           </nav>
 
-          <div className={activeTab === 'intel' ? '' : 'tab-hidden'}>
+          <div className={sidebarTab === 'intel' ? '' : 'tab-hidden'}>
             <WeatherWidget latitude={selected?.latitude} longitude={selected?.longitude} />
             <IntelligencePanel />
           </div>
 
           {/* Kept mounted (via CSS) rather than unmounted so the simulation's
               interval keeps running when the user switches tabs. */}
-          <div className={activeTab === 'simulation' ? '' : 'tab-hidden'}>
+          <div className={sidebarTab === 'simulation' ? '' : 'tab-hidden'}>
             <SimulationPanel onEvent={handleSimEvent} onUnitsChange={setSimUnits} />
           </div>
 
-          <div className={activeTab === 'analytics' ? '' : 'tab-hidden'}>
+          <div className={sidebarTab === 'analytics' ? '' : 'tab-hidden'}>
             <AnalyticsPanel units={simUnits} events={simEvents} onHeatmapChange={setHeatmap} />
           </div>
         </aside>
@@ -121,6 +139,10 @@ export default function Dashboard({ onLogout }) {
             datasets={[{ label: 'Reports', data: [3, 5, 2, 8, 4], borderColor: '#2f81f7' }]}
           />
         </section>
+      </div>
+
+      <div className={activeTab === 'comms' ? 'dashboard-comms' : 'tab-hidden'}>
+        <CommunicationsPanel />
       </div>
     </div>
   );
