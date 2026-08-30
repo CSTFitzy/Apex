@@ -179,29 +179,85 @@ export async function initSchema() {
 /* Users                                                               */
 /* ------------------------------------------------------------------ */
 
+// When PostgreSQL isn't reachable (e.g. running locally without setting up a
+// database), fall back to a per-process in-memory user store so that
+// register/login - and therefore the rest of the app - still work. This
+// only ever kicks in for connection-level failures; genuine query errors
+// (bad SQL, constraint violations, etc.) still propagate normally.
+const memoryUsers = new Map(); // keyed by email
+let memoryUserIdSeq = 1;
+
+const DB_UNAVAILABLE_CODES = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'ETIMEDOUT',
+  'EHOSTUNREACH',
+  '3D000', // invalid_catalog_name (database does not exist)
+  '28P01', // invalid_password
+]);
+
+function isDbUnavailableError(err) {
+  if (err && DB_UNAVAILABLE_CODES.has(err.code)) return true;
+  const message = (err && err.message) || '';
+  return /connect|Connection terminated|password authentication/i.test(message);
+}
+
+function toPublicUser(user) {
+  const { id, username, email, role, created_at } = user;
+  return { id, username, email, role, created_at };
+}
+
 export const Users = {
   async create({ username, email, password, role = 'analyst' }) {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const result = await query(
-      `INSERT INTO users (username, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, username, email, role, created_at`,
-      [username, email, passwordHash, role]
-    );
-    return result.rows[0];
+    try {
+      const result = await query(
+        `INSERT INTO users (username, email, password_hash, role)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, username, email, role, created_at`,
+        [username, email, passwordHash, role]
+      );
+      return result.rows[0];
+    } catch (err) {
+      if (!isDbUnavailableError(err)) throw err;
+      logger.warn('Database unavailable; storing new user in memory for this session', {
+        error: err.message,
+      });
+      const user = {
+        id: memoryUserIdSeq++,
+        username,
+        email,
+        password_hash: passwordHash,
+        role,
+        created_at: new Date().toISOString(),
+      };
+      memoryUsers.set(email, user);
+      return toPublicUser(user);
+    }
   },
 
   async findByEmail(email) {
-    const result = await query('SELECT * FROM users WHERE email = $1', [email]);
-    return result.rows[0] || null;
+    try {
+      const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+      return result.rows[0] || null;
+    } catch (err) {
+      if (!isDbUnavailableError(err)) throw err;
+      return memoryUsers.get(email) || null;
+    }
   },
 
   async findById(id) {
-    const result = await query(
-      'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
-      [id]
-    );
-    return result.rows[0] || null;
+    try {
+      const result = await query(
+        'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
+        [id]
+      );
+      return result.rows[0] || null;
+    } catch (err) {
+      if (!isDbUnavailableError(err)) throw err;
+      const user = [...memoryUsers.values()].find((candidate) => candidate.id === id);
+      return user ? toPublicUser(user) : null;
+    }
   },
 
   async verifyPassword(user, password) {
